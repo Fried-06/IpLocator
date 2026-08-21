@@ -176,9 +176,69 @@
     <!-- Content scrollable -->
     <div class="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
 
-        <!-- ── Dashboard (placeholder) ── -->
-        <div id="view-dashboard" class="view-section" style="display:none">
-            <p class="text-gray-500 text-sm">Le tableau de bord NOC est disponible via le menu.</p>
+
+                    <!-- ══════════════════════════════════════════════
+             VUE DASHBOARD
+        ══════════════════════════════════════════════ -->
+        <div id="view-dashboard" class="view-section space-y-6" style="display:none">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="h-9 w-9 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);">
+                            <i class="fa-solid fa-heart-pulse text-primary text-sm"></i>
+                        </div>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono" style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">OPTIMAL</span>
+                    </div>
+                    <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Santé Réseau</p>
+                    <p class="text-3xl font-bold text-white">98<span class="text-primary text-lg">%</span></p>
+                </div>
+                <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="h-9 w-9 rounded-lg flex items-center justify-center" style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);">
+                            <i class="fa-solid fa-server text-cyan text-sm"></i>
+                        </div>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono" style="background:rgba(6,182,212,0.1);color:#67e8f9;border:1px solid rgba(6,182,212,0.3);">EN LIGNE</span>
+                    </div>
+                    <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Équipements Actifs</p>
+                    <p class="text-3xl font-bold text-white">47<span class="text-gray-600 text-lg">/52</span></p>
+                </div>
+                <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="h-9 w-9 rounded-lg flex items-center justify-center" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);">
+                            <i class="fa-solid fa-wave-square text-warning text-sm"></i>
+                        </div>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono" style="background:rgba(245,158,11,0.1);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">NORMAL</span>
+                    </div>
+                    <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Débit Moyen</p>
+                    <p class="text-3xl font-bold text-white">312<span class="text-warning text-lg ml-1">Mbps</span></p>
+                </div>
+                <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="h-9 w-9 rounded-lg flex items-center justify-center" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);">
+                            <i class="fa-solid fa-triangle-exclamation text-danger text-sm"></i>
+                        </div>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono badge-pulse" style="background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.3);">ACTIF</span>
+                    </div>
+                    <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Alertes Actives</p>
+                    <p class="text-3xl font-bold text-white">3</p>
+                </div>
+            </div>
+
+            <!-- Graphiques -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-2 rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                    <h3 class="text-white font-semibold text-sm mb-5">Trafic Réseau en Temps Réel</h3>
+                    <div style="height:220px;"><canvas id="chart-traffic"></canvas></div>
+                </div>
+                <div class="rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                    <h3 class="text-white font-semibold text-sm mb-5">Répartition des Ports</h3>
+                    <div style="height:180px;" class="flex items-center justify-center"><canvas id="chart-ports"></canvas></div>
+                </div>
+            </div>
+            
+            <!-- Assurez-vous que tableau_de_bord.js est bien appelé à la fin du fichier index.html -->
+        
         </div>
 
         <!-- ══════════════════════════════════════════════
@@ -641,62 +701,86 @@
 <script src="ressources/js/tracage.js"></script>
 <script src="ressources/js/topologie.js"></script>
 <script src="ressources/js/securite.js"></script>
+<script src="ressources/js/tableau_de_bord.js"></script>
 
 <script>
-// ── Auth & session ──
-const session = verifierSession();
-if (session) appliquerRestrictions();
-
-// ── Déconnexion ──
-document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
-
 // ── Horloge ──
 setInterval(() => {
     const el = document.getElementById('current-time');
     if (el) el.textContent = new Date().toLocaleTimeString('fr-FR');
 }, 1000);
 
-// ── Navigation SPA ──
-const views = {
-    'nav-dashboard': { id: 'view-dashboard', display: 'block',  title: 'TABLEAU DE BORD NOC'              },
-    'nav-tracing':   { id: 'view-tracing',   display: 'block',  title: 'TRAÇAGE & LOCALISATION'           },
-    'nav-topology':  { id: 'view-topology',  display: 'flex',   title: 'CARTOGRAPHIE RÉSEAU'              },
-    'nav-security':  { id: 'view-security',  display: 'block',  title: 'ISOLATION & RÉPONSE AUX INCIDENTS' },
-};
-
-let networkInstance = null;
-
-document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', e => {
-        e.preventDefault();
-        const navId = e.currentTarget.id;
-
-        // Mise à jour nav active
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-
-        // Masquer toutes les vues
-        Object.values(views).forEach(({ id }) => {
-            document.getElementById(id).style.display = 'none';
-        });
-
-        // Afficher la vue ciblée
-        const target = views[navId];
-        if (!target) return;
-        const el = document.getElementById(target.id);
-        el.style.display = target.display;
-        document.getElementById('page-title').textContent = target.title;
-
-        // Init topologie au premier clic
-        if (navId === 'nav-topology' && !networkInstance) {
-            setTimeout(() => { networkInstance = initTopology(); }, 80);
+// ── Gestion du changement d'onglet (SPA) ──
+function afficherVue(viewId) {
+    const listeVues = ['view-dashboard', 'view-tracing', 'view-topology', 'view-security'];
+    
+    // Cacher toutes les vues
+    listeVues.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = 'none';
+            el.classList.remove('hidden'); // Au cas où
         }
     });
+
+    // Afficher la vue demandée
+    const cible = document.getElementById(viewId);
+    if (cible) {
+        cible.style.display = (viewId === 'view-topology') ? 'flex' : 'block';
+    }
+
+    // Initialiser les graphiques si on va sur le Dashboard
+    if (viewId === 'view-dashboard') {
+        setTimeout(() => {
+            if (typeof initDashboardCharts === 'function') initDashboardCharts();
+        }, 50);
+    }
+    
+    // Initialiser la topologie si on va sur la Topologie
+    if (viewId === 'view-topology') {
+        setTimeout(() => {
+            if (typeof initTopology === 'function' && !window._topoInit) {
+                window._topoInit = true;
+                initTopology();
+            }
+        }, 50);
+    }
+}
+
+// Écouteurs sur les éléments du menu
+document.getElementById('nav-dashboard')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    mettreAJourMenu('nav-dashboard', 'TABLEAU DE BORD NOC');
+    afficherVue('view-dashboard');
 });
 
-// Initialiser la vue par défaut (traçage)
-Object.values(views).forEach(({ id }) => document.getElementById(id).style.display = 'none');
-document.getElementById('view-tracing').style.display = 'block';
+document.getElementById('nav-tracing')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    mettreAJourMenu('nav-tracing', 'TRAÇAGE & LOCALISATION');
+    afficherVue('view-tracing');
+});
+
+document.getElementById('nav-topology')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    mettreAJourMenu('nav-topology', 'CARTOGRAPHIE RÉSEAU');
+    afficherVue('view-topology');
+});
+
+document.getElementById('nav-security')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    mettreAJourMenu('nav-security', 'ISOLATION & RÉPONSE AUX INCIDENTS');
+    afficherVue('view-security');
+});
+
+function mettreAJourMenu(activeNavId, titre) {
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(activeNavId)?.classList.add('active');
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = titre;
+}
+
+// Vue par défaut à l'ouverture
+afficherVue('view-tracing');
 </script>
 </body>
 </html>
