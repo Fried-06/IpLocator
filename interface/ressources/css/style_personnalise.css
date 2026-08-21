@@ -1,0 +1,271 @@
+/* ══════════════════════════════════════════════════════
+   ASECNA NET-TRACE · Premium NOC Design System CSS
+   ══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');
+
+/* ── Root Variables ── */
+:root {
+    --bg-deep:       #090D16;
+    --bg-card:       #111827;
+    --bg-surface:    #0F172A;
+    --border-subtle: #1F2937;
+    --border-glow:   rgba(16,185,129,0.3);
+    --emerald:       #10b981;
+    --cyan:          #06b6d4;
+    --amber:         #f59e0b;
+    --danger:        #ef4444;
+    --text-primary:  #f9fafb;
+    --text-muted:    #6b7280;
+    --text-subtle:   #374151;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar             { width: 5px; height: 5px; }
+::-webkit-scrollbar-track       { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb       { background: var(--border-subtle); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #374151; }
+
+.custom-scrollbar::-webkit-scrollbar       { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(31,41,55,0.6); border-radius: 8px; }
+
+/* ── View fade-in transition ── */
+.view-section { animation: viewFadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+
+@keyframes viewFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════
+   ULTRA-PREMIUM SEARCH BAR — Conic Gradient Animation
+   ══════════════════════════════════════════════════════ */
+
+.search-wrapper {
+    position: relative;
+    border-radius: 16px;
+    padding: 2px;                 /* espace pour la bordure animée */
+    background: var(--bg-surface);
+}
+
+/* La bordure animée en conic-gradient (anneau tournant) */
+.search-wrapper::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: conic-gradient(
+        from var(--angle, 0deg),
+        transparent 0%,
+        #10b981 15%,
+        #06b6d4 30%,
+        #6366f1 45%,
+        transparent 60%,
+        transparent 100%
+    );
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rotate-conic 3s linear infinite;
+    opacity: 0.6;
+    transition: opacity 0.4s;
+}
+.search-wrapper:focus-within::before { opacity: 1; }
+
+@property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+@keyframes rotate-conic { to { --angle: 360deg; } }
+
+/* Inner container (fond sombre de la barre) */
+.search-inner {
+    position: relative;
+    background: #0B111E;
+    border-radius: 14px;
+    display: flex; align-items: center;
+    padding: 6px 6px 6px 18px;
+    transition: box-shadow 0.3s ease;
+}
+.search-wrapper:focus-within .search-inner {
+    box-shadow: 0 0 30px rgba(16,185,129,0.12), 0 0 60px rgba(6,182,212,0.06);
+}
+
+/* Icône loupe avec pulse subtil */
+.search-icon {
+    color: #4b5563;
+    flex-shrink: 0;
+    transition: color 0.3s;
+    animation: icon-pulse 2.5s ease-in-out infinite;
+}
+.search-wrapper:focus-within .search-icon { color: #10b981; animation: none; }
+
+@keyframes icon-pulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+}
+
+/* Input monospace */
+.search-input {
+    flex: 1;
+    background: transparent;
+    border: none; outline: none;
+    color: #e5e7eb;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    font-size: 15px;
+    padding: 10px 14px;
+    letter-spacing: 0.02em;
+    caret-color: #10b981;
+}
+.search-input::placeholder { color: #374151; font-style: italic; }
+
+/* Bouton Tracer intégré */
+.search-btn {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
+    color: white; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;
+    padding: 10px 20px; border-radius: 10px; border: none;
+    cursor: pointer; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 12px rgba(5,150,105,0.4);
+    text-transform: uppercase;
+}
+.search-btn:hover {
+    background: linear-gradient(135deg, #10b981 0%, #0891b2 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16,185,129,0.5);
+}
+.search-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ── Shortcut Badges ── */
+.shortcut-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 8px;
+    background: rgba(15,23,42,0.8);
+    border: 1px solid var(--border-subtle);
+    color: #9ca3af; font-size: 11px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s ease;
+    font-family: 'Roboto Mono', monospace;
+}
+.shortcut-badge:hover {
+    border-color: rgba(16,185,129,0.5);
+    color: #d1fae5;
+    background: rgba(16,185,129,0.07);
+    box-shadow: 0 0 10px rgba(16,185,129,0.15);
+}
+
+/* ══════════════════════════════════════════════════════
+   KPI CARDS
+   ══════════════════════════════════════════════════════ */
+.kpi-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+}
+.kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(16,185,129,0.3) !important;
+    box-shadow: 0 15px 35px -10px rgba(0,0,0,0.6), 0 0 20px -5px rgba(16,185,129,0.08);
+}
+.kpi-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(16,185,129,0.3), transparent);
+    opacity: 0; transition: opacity 0.3s;
+}
+.kpi-card:hover::after { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════
+   MONOSPACE TYPOGRAPHY UTILITIES
+   ══════════════════════════════════════════════════════ */
+.font-mono-noc,
+.ip-addr, .mac-addr, .port-label {
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    letter-spacing: 0.04em;
+}
+
+/* ══════════════════════════════════════════════════════
+   TOPOLOGY — Dot Grid Background
+   ══════════════════════════════════════════════════════ */
+.topology-grid-bg {
+    background-color: #090D16;
+    background-image:
+        radial-gradient(circle, rgba(31,41,55,0.8) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+/* ══════════════════════════════════════════════════════
+   SIDEBAR NAV ITEMS
+   ══════════════════════════════════════════════════════ */
+.nav-item {
+    position: relative;
+    transition: all 0.2s ease;
+}
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(16,185,129,0.12) 0%, transparent 100%);
+    color: #10b981;
+    border-left-color: #10b981;
+}
+.nav-item:not(.active):hover {
+    background: rgba(31,41,55,0.5);
+}
+
+/* ══════════════════════════════════════════════════════
+   BUTTONS (Glow effects)
+   ══════════════════════════════════════════════════════ */
+.btn-danger-glow {
+    box-shadow: 0 0 15px rgba(239,68,68,0.2);
+    transition: all 0.25s ease;
+}
+.btn-danger-glow:hover:not(:disabled) {
+    box-shadow: 0 0 30px rgba(239,68,68,0.45);
+    transform: translateY(-1px);
+}
+.btn-danger-glow:disabled {
+    opacity: 0.45; cursor: not-allowed;
+    box-shadow: none; transform: none;
+}
+
+.btn-primary-glow {
+    box-shadow: 0 0 15px rgba(16,185,129,0.2);
+    transition: all 0.25s ease;
+}
+.btn-primary-glow:hover {
+    box-shadow: 0 0 28px rgba(16,185,129,0.4);
+    transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════
+   AUDIT TABLE ROWS
+   ══════════════════════════════════════════════════════ */
+#audit-log-body tr {
+    border-bottom: 1px solid rgba(31,41,55,0.6);
+    transition: background 0.15s;
+}
+#audit-log-body tr:hover { background: rgba(17,24,39,0.8); }
+
+/* ══════════════════════════════════════════════════════
+   BADGE ANIMATIONS
+   ══════════════════════════════════════════════════════ */
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+.badge-pulse { animation: pulse-badge 2s ease-in-out infinite; }
+
+/* ══════════════════════════════════════════════════════
+   PATH TRACER TIMELINE
+   ══════════════════════════════════════════════════════ */
+.path-connector {
+    position: absolute; top: 27px;
+    height: 2px;
+    background: linear-gradient(to right, #1F2937, #10b981, #1F2937);
+    opacity: 0.4;
+}
+
+/* Canvas */
+canvas { user-select: none; }

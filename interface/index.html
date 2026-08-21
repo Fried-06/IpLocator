@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASECNA NET-TRACE — NOC Cockpit</title>
+    <meta name="description" content="Plateforme de supervision réseau ASECNA — Traçage topologique, découverte dynamique et isolation d'urgence.">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        if (typeof window !== 'undefined') {
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            dark:        '#090D16',
+                            card:        '#111827',
+                            surface:     '#0F172A',
+                            border:      '#1F2937',
+                            primary:     '#10B981',
+                            primaryDark: '#059669',
+                            cyan:        '#06B6D4',
+                            warning:     '#F59E0B',
+                            danger:      '#EF4444',
+                        },
+                        fontFamily: {
+                            sans:  ['Inter', 'sans-serif'],
+                            mono:  ['Roboto Mono', 'monospace'],
+                        },
+                        animation: {
+                            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            'spin-slow':  'spin 8s linear infinite',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="ressources/css/style_personnalise.css">
+</head>
+
+<body class="bg-dark text-gray-300 font-sans h-screen flex overflow-hidden">
+
+<!-- ═══════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════ -->
+<aside class="w-72 bg-card flex flex-col z-20 flex-shrink-0" style="border-right: 1px solid #1F2937; box-shadow: 4px 0 24px rgba(0,0,0,0.5);">
+
+    <!-- Logo ASECNA + Titre -->
+    <div class="px-5 py-4 flex items-center gap-3" style="border-bottom: 1px solid #1F2937;">
+        <img src="../image/Logo_ASECNA.png" alt="ASECNA" class="h-10 w-auto flex-shrink-0"
+             onerror="this.style.display='none'; document.getElementById('sb-logo-fallback').style.display='flex'">
+        <div id="sb-logo-fallback" class="hidden h-10 w-10 rounded-lg items-center justify-center flex-shrink-0"
+             style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);">
+            <i class="fa-solid fa-tower-broadcast text-primary text-lg"></i>
+        </div>
+        <div>
+            <h1 class="font-bold text-white tracking-widest text-base">NET<span class="text-primary">-</span>TRACE</h1>
+            <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="relative flex h-1.5 w-1.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+                </span>
+                <span class="text-[9px] text-primary uppercase font-semibold tracking-widest">Réseau Actif</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profil Utilisateur (dynamique via auth.js) -->
+    <div class="px-5 py-4" style="border-bottom: 1px solid #1F2937;">
+        <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm text-primary"
+                 style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);">
+                <i class="fa-solid fa-user-tie text-xs"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p id="profil-nom" class="text-sm font-semibold text-white truncate">Chargement...</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span id="profil-role" class="text-[9px] font-mono px-1.5 py-0.5 rounded uppercase tracking-widest font-bold"
+                          style="background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.25);">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto py-5 px-3 custom-scrollbar">
+        <p class="text-[9px] text-gray-600 font-semibold uppercase tracking-widest mb-3 px-2">Supervision</p>
+        <ul class="space-y-1">
+            <li>
+                <a href="#" id="nav-dashboard"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 border-l-2 border-transparent cursor-pointer">
+                    <i class="fa-solid fa-chart-line w-4 text-center text-sm"></i>
+                    <span class="text-sm font-medium">Tableau de bord</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" id="nav-tracing"
+                   class="nav-item active flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border-l-2 cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-magnifying-glass-location w-4 text-center text-sm"></i>
+                        <span class="text-sm font-medium">Traçage IP / MAC</span>
+                    </div>
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest"
+                          style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">Live</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" id="nav-topology"
+                   class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 border-l-2 border-transparent cursor-pointer">
+                    <i class="fa-solid fa-network-wired w-4 text-center text-sm"></i>
+                    <span class="text-sm font-medium">Topologie Réseau</span>
+                </a>
+            </li>
+            <li class="mt-6">
+                <a href="#" id="nav-security"
+                   class="nav-item flex items-center justify-between px-3 py-2.5 rounded-lg text-gray-500 border-l-2 border-transparent cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-shield-halved w-4 text-center text-sm"></i>
+                        <span class="text-sm font-medium">Isolation &amp; Sécurité</span>
+                    </div>
+                    <span class="badge-pulse text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase"
+                          style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);">!</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Footer sidebar : déconnexion -->
+    <div class="p-4" style="border-top: 1px solid #1F2937;">
+        <button id="btn-deconnexion"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-300 text-sm transition-colors hover:bg-[#0F172A]">
+            <i class="fa-solid fa-right-from-bracket text-xs"></i>
+            <span>Déconnexion</span>
+        </button>
+    </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════════ -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden bg-dark relative">
+
+    <!-- Header -->
+    <header class="h-16 flex items-center justify-between px-8 flex-shrink-0"
+            style="background: rgba(17,24,39,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #1F2937;">
+        <div>
+            <h2 id="page-title" class="text-base font-bold text-white tracking-wide">TRAÇAGE &amp; LOCALISATION</h2>
+            <p class="text-[10px] text-gray-600 mt-0.5 font-mono">
+                <span id="current-time" class="text-primary">--:--:--</span>
+                &nbsp;·&nbsp; Serveur API connecté
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Badge rôle courant -->
+            <span id="badge-role-header" class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">--</span>
+            <!-- Indicateur réseau -->
+            <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
+                <span class="font-mono">STA-API: 200</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content scrollable -->
+    <div class="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+
+        <!-- ── Dashboard (placeholder) ── -->
+        <div id="view-dashboard" class="view-section" style="display:none">
+            <p class="text-gray-500 text-sm">Le tableau de bord NOC est disponible via le menu.</p>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             VUE TRAÇAGE IP / MAC
+        ══════════════════════════════════════════════ -->
+        <div id="view-tracing" class="view-section max-w-6xl mx-auto space-y-6">
+
+            <!-- Section titre -->
+            <div class="flex items-center gap-3 mb-2">
+                <div class="h-8 w-8 rounded-lg flex items-center justify-center"
+                     style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);">
+                    <i class="fa-solid fa-crosshairs text-primary text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-white font-semibold text-sm">Localisation &amp; Traçage Physique</h3>
+                    <p class="text-[10px] text-gray-600">Identification CDP/LLDP · Table CAM · sysLocation SNMP</p>
+                </div>
+            </div>
+
+            <!-- BARRE DE RECHERCHE ULTRA-PREMIUM -->
+            <div>
+                <form id="form-tracing">
+                    <div class="search-wrapper">
+                        <div class="search-inner">
+                            <!-- Icône loupe -->
+                            <svg class="search-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                            </svg>
+                            <!-- Input monospace -->
+                            <input type="text" id="input-target" class="search-input"
+                                   placeholder="Adresse IP · Nom d'hôte · Adresse MAC..." required>
+                            <!-- Bouton submit intégré -->
+                            <button type="submit" class="search-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                </svg>
+                                <span>TRACER</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Raccourcis (sans emojis texte) -->
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                    <span class="text-[10px] text-gray-600 uppercase tracking-widest font-mono mr-1">Accès rapide</span>
+                    <button type="button" class="btn-shortcut shortcut-badge" data-target="AMHS">
+                        <i class="fa-solid fa-bolt text-primary text-[9px]"></i> AMHS
+                    </button>
+                    <button type="button" class="btn-shortcut shortcut-badge" data-target="SMT">
+                        <i class="fa-solid fa-bolt text-primary text-[9px]"></i> SMT
+                    </button>
+                    <button type="button" class="btn-shortcut shortcut-badge" data-target="FREDA">
+                        <i class="fa-solid fa-bolt text-primary text-[9px]"></i> FREDA
+                    </button>
+                    <button type="button" class="btn-shortcut shortcut-badge" data-target="10.20.1.15">
+                        <i class="fa-solid fa-network-wired text-cyan text-[9px]"></i>
+                        <span class="ip-addr">10.20.1.15</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ZONE DE RÉSULTATS -->
+            <div id="tracing-result-container" style="display:none" class="space-y-5">
+
+                <!-- 4 panneaux identité -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                    <!-- A: Identité -->
+                    <div class="kpi-card rounded-xl p-5 relative overflow-hidden"
+                         style="background:#111827; border: 1px solid #1F2937;">
+                        <div class="absolute -right-3 -top-3 text-5xl opacity-5">
+                            <i class="fa-solid fa-id-card"></i>
+                        </div>
+                        <p class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold mb-4">Identité Machine</p>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Nom d'hôte</span>
+                                <span id="res-equipement" class="text-white font-semibold text-sm">--</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">IP</span>
+                                <span id="res-ip" class="ip-addr text-xs px-2 py-0.5 rounded"
+                                      style="background:#0F172A; border:1px solid #1F2937; color:#a7f3d0;">--</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">MAC</span>
+                                <span id="res-mac" class="mac-addr text-[10px] text-gray-500">--</span>
+                            </div>
+                            <div class="pt-2 mt-1 flex items-center justify-between" style="border-top:1px solid #1F2937;">
+                                <span id="res-status-badge" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">--</span>
+                                <span class="text-[10px] text-gray-600 font-mono flex items-center gap-1">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span id="res-latency">--</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- B: Switch d'ancrage -->
+                    <div class="kpi-card rounded-xl p-5 relative overflow-hidden"
+                         style="background:#111827; border: 1px solid #1F2937;">
+                        <div class="absolute -right-3 -top-3 text-5xl opacity-5">
+                            <i class="fa-solid fa-sitemap"></i>
+                        </div>
+                        <p class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold mb-4">Point d'Ancrage</p>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Switch</span>
+                                <span id="res-switch-name" class="text-white font-semibold text-sm">--</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">IP Switch</span>
+                                <span id="res-switch-ip" class="ip-addr text-[10px] text-gray-400">--</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Type</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(6,182,212,0.1);color:#67e8f9;border:1px solid rgba(6,182,212,0.2);">Switch Accès L2/L3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- C: Interface physique -->
+                    <div class="kpi-card rounded-xl p-5 relative overflow-hidden"
+                         style="background:#111827; border: 1px solid #1F2937;">
+                        <div class="absolute -right-3 -top-3 text-5xl opacity-5">
+                            <i class="fa-solid fa-ethernet"></i>
+                        </div>
+                        <p class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold mb-4">Interface Physique</p>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Port Actif</span>
+                                <span id="res-port" class="port-label font-bold text-sm px-2 py-0.5 rounded"
+                                      style="background:rgba(245,158,11,0.1);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);">--</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Débit</span>
+                                <span id="res-speed" class="font-mono text-[10px] text-gray-400">--</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-gray-500">VLAN</span>
+                                <span id="res-vlan" class="font-mono text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2);">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- D: Localisation physique -->
+                    <div class="kpi-card rounded-xl p-5 relative overflow-hidden"
+                         style="background:#111827; border: 1px solid #1F2937;">
+                        <div class="absolute -right-3 -top-3 text-5xl opacity-5">
+                            <i class="fa-solid fa-building-shield"></i>
+                        </div>
+                        <p class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold mb-4">Localisation Physique</p>
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-location-dot text-primary mt-0.5"></i>
+                            <div>
+                                <p id="res-location" class="text-white font-medium text-sm leading-snug">--</p>
+                                <p class="text-[9px] text-gray-600 mt-1.5 font-mono">sysLocation · SNMP</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PATH TRACING VISUALIZER -->
+                <div class="rounded-xl p-6" style="background:#111827; border:1px solid #1F2937;">
+                    <div class="flex items-center justify-between mb-7">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-route text-primary"></i>
+                            <h3 class="text-sm font-semibold text-white">Trajectoire Layer 2 / Layer 3</h3>
+                        </div>
+                        <span class="text-[9px] text-gray-600 font-mono uppercase tracking-widest">CDP/LLDP · CAM Table</span>
+                    </div>
+                    <div class="relative w-full py-4 overflow-x-auto custom-scrollbar">
+                        <!-- Ligne connectrice de fond -->
+                        <div class="absolute top-[2.9rem] left-16 right-16 h-px opacity-20"
+                             style="background: linear-gradient(to right, transparent, #10b981, transparent);"></div>
+                        <div id="path-container" class="flex items-center justify-between min-w-[700px] relative z-10"></div>
+                    </div>
+                </div>
+
+                <!-- Actions rapides -->
+                <div class="flex items-center justify-end gap-3">
+                    <button class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+                            style="background:#0F172A; border:1px solid #1F2937;">
+                        <i class="fa-solid fa-file-arrow-down text-xs"></i>
+                        Exporter la fiche
+                    </button>
+                    <button class="btn-isolation btn-danger-glow flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-danger border transition-colors"
+                            style="background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.3);">
+                        <i class="fa-solid fa-plug-circle-xmark text-xs"></i>
+                        <span class="btn-label">Isoler cet équipement</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             VUE TOPOLOGIE
+        ══════════════════════════════════════════════ -->
+        <div id="view-topology" class="view-section h-[calc(100vh-8rem)] flex-col" style="display:none">
+            <!-- Toolbar -->
+            <div class="rounded-t-xl p-3.5 flex items-center justify-between flex-shrink-0"
+                 style="background:#111827; border:1px solid #1F2937;">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-network-wired text-primary"></i>
+                    <div>
+                        <p class="text-white font-semibold text-xs tracking-wide">CARTOGRAPHIE DYNAMIQUE DU RÉSEAU ASECNA</p>
+                        <span class="inline-flex items-center gap-1 text-[9px] font-mono uppercase tracking-widest mt-0.5"
+                              style="color:#10b981;">
+                            <span class="inline-block h-1.5 w-1.5 rounded-full bg-primary badge-pulse"></span>
+                            Temps réel
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-re-explore" class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-gray-400 hover:text-white transition-colors"
+                            style="background:#0F172A; border:1px solid #1F2937;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Ré-explorer
+                    </button>
+                    <button id="btn-center-view" class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-gray-400 hover:text-white transition-colors"
+                            style="background:#0F172A; border:1px solid #1F2937;">
+                        <i class="fa-solid fa-crosshairs"></i> Recentrer
+                    </button>
+                    <label class="flex items-center gap-2 px-3 py-1.5 rounded text-xs text-gray-400 cursor-pointer hover:text-white transition-colors"
+                           style="background:#0F172A; border:1px solid #1F2937;">
+                        <input type="checkbox" id="toggle-critical" checked class="rounded accent-primary">
+                        <span>Équipements critiques</span>
+                    </label>
+                    <button id="btn-export-png" class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-colors btn-primary-glow"
+                            style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#10b981;">
+                        <i class="fa-solid fa-camera"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas + Drawer -->
+            <div class="flex-1 relative overflow-hidden rounded-b-xl topology-grid-bg"
+                 style="border:1px solid #1F2937; border-top:none; min-height:0;">
+                <div id="conteneur-topologie" class="absolute inset-0"></div>
+
+                <!-- Side Drawer -->
+                <div id="topology-drawer" class="absolute top-0 right-0 bottom-0 w-72 flex flex-col z-20 transition-transform duration-300 translate-x-full"
+                     style="background:#111827; border-left:1px solid #1F2937; box-shadow:-5px 0 25px rgba(0,0,0,0.5);">
+                    <div class="p-4 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid #1F2937;">
+                        <h4 class="text-white font-semibold text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-microchip text-primary text-xs"></i> Détails du Nœud
+                        </h4>
+                        <button id="btn-close-drawer" class="text-gray-600 hover:text-white transition-colors">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+                        <div>
+                            <p class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Équipement</p>
+                            <p id="drawer-name" class="text-white font-bold text-sm">--</p>
+                            <span id="drawer-type-badge" class="inline-block mt-1.5 px-2 py-0.5 rounded text-[9px] uppercase font-bold">--</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <p class="text-[9px] text-gray-600 uppercase tracking-widest mb-1">IP</p>
+                                <p id="drawer-ip" class="ip-addr text-xs px-1.5 py-0.5 rounded inline-block"
+                                   style="background:#0F172A;border:1px solid #1F2937;color:#a7f3d0;">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-gray-600 uppercase tracking-widest mb-1">MAC</p>
+                                <p id="drawer-mac" class="mac-addr text-[10px] text-gray-500">--</p>
+                            </div>
+                        </div>
+                        <div class="rounded-lg p-3" style="background:#0F172A;border:1px solid #1F2937;">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs text-gray-500">Statut</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                                      style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.25);">
+                                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-primary mr-1 badge-pulse"></span>EN LIGNE
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-500">Latence</span>
+                                <span class="font-mono text-xs text-white">1.2 ms</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-gray-600 uppercase tracking-widest mb-1.5">Emplacement</p>
+                            <p class="text-xs text-gray-300 flex items-start gap-2">
+                                <i class="fa-solid fa-location-dot text-primary mt-0.5 flex-shrink-0"></i>
+                                <span id="drawer-location">--</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="p-3 flex flex-col gap-2 flex-shrink-0" style="border-top:1px solid #1F2937;">
+                        <button class="btn-primary-glow w-full py-2 rounded text-xs font-semibold transition-all flex items-center justify-center gap-2"
+                                style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;">
+                            <i class="fa-solid fa-magnifying-glass-location"></i> Tracer cet équipement
+                        </button>
+                        <button class="btn-isolation btn-danger-glow w-full py-2 rounded text-xs font-semibold transition-all flex items-center justify-center gap-2"
+                                style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);color:#f87171;">
+                            <i class="fa-solid fa-plug-circle-xmark"></i>
+                            <span class="btn-label">Isoler</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             VUE SÉCURITÉ & ISOLATION
+        ══════════════════════════════════════════════ -->
+        <div id="view-security" class="view-section max-w-5xl mx-auto space-y-6" style="display:none">
+
+            <!-- Banner -->
+            <div class="flex items-start gap-4 p-4 rounded-xl"
+                 style="background: linear-gradient(to right, rgba(239,68,68,0.08), rgba(245,158,11,0.04)); border-left:3px solid #ef4444; border-top:1px solid rgba(239,68,68,0.2); border-bottom:1px solid rgba(239,68,68,0.2); border-right:1px solid rgba(245,158,11,0.1);">
+                <i class="fa-solid fa-triangle-exclamation text-danger text-xl mt-0.5 badge-pulse flex-shrink-0"></i>
+                <div>
+                    <h3 class="text-white font-bold text-sm tracking-wide">CENTRE DE RÉPONSE AUX INCIDENTS &amp; ISOLATION RÉSEAU</h3>
+                    <p class="text-xs text-gray-500 mt-1">La mise en quarantaine exécute un <span class="font-mono text-amber-400">shutdown</span> administratif sur le port du switch d'accès via SSH. Réservé aux menaces cyber confirmées.</p>
+                </div>
+            </div>
+
+            <!-- Formulaire principal -->
+            <div class="rounded-xl p-6" style="background:#111827; border:1px solid #1F2937;">
+                <form id="form-security" class="max-w-xl space-y-5">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Équipement cible (IP ou Nom)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="sec-input-target"
+                                   class="flex-1 rounded-lg px-4 py-2.5 text-sm text-white font-mono outline-none transition-all"
+                                   style="background:#0F172A; border:1px solid #1F2937; caret-color:#10b981;"
+                                   placeholder="ex: 10.20.1.15 ou AMHS"
+                                   onfocus="this.style.borderColor='rgba(239,68,68,0.5)'; this.style.boxShadow='0 0 0 2px rgba(239,68,68,0.1)'"
+                                   onblur="this.style.borderColor='#1F2937'; this.style.boxShadow='none'"
+                                   required>
+                            <button type="button" id="sec-btn-detect"
+                                    class="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white transition-all"
+                                    style="background:#0F172A; border:1px solid #1F2937;">
+                                <i class="fa-solid fa-satellite-dish text-xs"></i> Détecter
+                            </button>
+                        </div>
+                        <p id="sec-detection-result" class="text-[11px] text-primary mt-2 hidden font-mono">
+                            <i class="fa-solid fa-check-circle"></i> Détecté : SW-BLOC-TECH-01 · Gi1/0/14
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Motif d'isolation</label>
+                        <select id="sec-input-reason"
+                                class="w-full rounded-lg px-4 py-2.5 text-sm text-white outline-none transition-all appearance-none"
+                                style="background:#0F172A; border:1px solid #1F2937;"
+                                required>
+                            <option value="" disabled selected>Sélectionner un motif...</option>
+                            <option value="Comportement anormal / Scan d'IP">Comportement anormal / Scan d'IP</option>
+                            <option value="Infection Malware / Ransomware suspecté">Infection Malware / Ransomware suspecté</option>
+                            <option value="Maintenance d'urgence">Maintenance d'urgence</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2" style="border-top:1px solid #1F2937;">
+                        <button type="submit"
+                                class="btn-isolation btn-danger-glow w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-bold text-danger transition-all"
+                                style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.35);">
+                            <i class="fa-solid fa-plug-circle-xmark"></i>
+                            <span class="btn-label">ISOLER L'ÉQUIPEMENT MAINTENANT</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Audit Log -->
+            <div class="rounded-xl overflow-hidden" style="background:#111827; border:1px solid #1F2937;">
+                <div class="px-5 py-4 flex items-center gap-2" style="background:#0B111E; border-bottom:1px solid #1F2937;">
+                    <i class="fa-solid fa-scroll text-gray-500 text-xs"></i>
+                    <h3 class="text-xs font-semibold text-white uppercase tracking-widest">Registre d'Audit — Isolations de Session</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[9px] text-gray-600 uppercase tracking-widest" style="border-bottom:1px solid #1F2937; background:#0B111E;">
+                                <th class="py-2.5 px-4 font-semibold">Horodatage</th>
+                                <th class="py-2.5 px-4 font-semibold">Cible</th>
+                                <th class="py-2.5 px-4 font-semibold">Switch / Port</th>
+                                <th class="py-2.5 px-4 font-semibold">Motif</th>
+                                <th class="py-2.5 px-4 font-semibold text-center">Statut</th>
+                                <th class="py-2.5 px-4 font-semibold text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-log-body" class="text-xs">
+                            <tr id="empty-log-row">
+                                <td colspan="6" class="py-10 text-center text-gray-600 font-mono text-[11px] italic">
+                                    Aucune action d'isolation enregistrée dans cette session.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /Content scrollable -->
+</main>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL SÉCURITÉ
+═══════════════════════════════════════════════════ -->
+<div id="modal-security" class="fixed inset-0 z-50 hidden items-center justify-center"
+     style="background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);">
+    <div id="modal-security-content" class="w-full max-w-md rounded-2xl p-6 relative transition-transform duration-300 scale-95"
+         style="background:#111827; border:1px solid rgba(239,68,68,0.4); box-shadow:0 0 50px rgba(239,68,68,0.2);">
+
+        <div class="absolute -top-4 -right-4 text-6xl opacity-[0.06]">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div class="flex items-center gap-2.5 mb-5">
+            <div class="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                 style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);">
+                <i class="fa-solid fa-shield-halved text-danger text-sm"></i>
+            </div>
+            <h3 class="text-white font-bold text-base">Confirmation Critique</h3>
+        </div>
+
+        <div class="rounded-lg p-4 mb-5" style="background:#0F172A; border:1px solid #1F2937;">
+            <p id="modal-sec-message" class="text-gray-300 text-sm leading-relaxed">
+                Vous êtes sur le point de couper la liaison réseau de l'équipement ciblé.
+            </p>
+            <p class="text-danger text-[10px] font-bold uppercase tracking-widest mt-3 font-mono">
+                <i class="fa-solid fa-bolt mr-1"></i>Action immédiate — irréversible sans restauration manuelle.
+            </p>
+        </div>
+
+        <form id="form-confirm-isolation">
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Mot de passe Administrateur NOC</label>
+                <input type="password" id="sec-input-password"
+                       class="w-full rounded-lg px-4 py-3 text-white text-center font-mono tracking-widest outline-none transition-all"
+                       style="background:#090D16; border:1px solid #1F2937; letter-spacing: 0.3em;"
+                       placeholder="• • • • • • • •" required>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" id="btn-cancel-isolation"
+                        class="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                        style="background:#0F172A; border:1px solid #1F2937;">
+                    Annuler
+                </button>
+                <button type="submit" id="btn-confirm-isolation"
+                        class="flex-1 py-2.5 rounded-lg text-sm font-bold text-white transition-colors"
+                        style="background:linear-gradient(135deg,#dc2626,#b91c1c); border:1px solid rgba(239,68,68,0.4); box-shadow:0 0 20px rgba(239,68,68,0.3);">
+                    Confirmer Shutdown
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════ -->
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="ressources/js/auth.js"></script>
+<script src="ressources/js/tracage.js"></script>
+<script src="ressources/js/topologie.js"></script>
+<script src="ressources/js/securite.js"></script>
+
+<script>
+// ── Auth & session ──
+const session = verifierSession();
+if (session) appliquerRestrictions();
+
+// ── Déconnexion ──
+document.getElementById('btn-deconnexion').addEventListener('click', deconnecter);
+
+// ── Horloge ──
+setInterval(() => {
+    const el = document.getElementById('current-time');
+    if (el) el.textContent = new Date().toLocaleTimeString('fr-FR');
+}, 1000);
+
+// ── Navigation SPA ──
+const views = {
+    'nav-dashboard': { id: 'view-dashboard', display: 'block',  title: 'TABLEAU DE BORD NOC'              },
+    'nav-tracing':   { id: 'view-tracing',   display: 'block',  title: 'TRAÇAGE & LOCALISATION'           },
+    'nav-topology':  { id: 'view-topology',  display: 'flex',   title: 'CARTOGRAPHIE RÉSEAU'              },
+    'nav-security':  { id: 'view-security',  display: 'block',  title: 'ISOLATION & RÉPONSE AUX INCIDENTS' },
+};
+
+let networkInstance = null;
+
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+        e.preventDefault();
+        const navId = e.currentTarget.id;
+
+        // Mise à jour nav active
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+
+        // Masquer toutes les vues
+        Object.values(views).forEach(({ id }) => {
+            document.getElementById(id).style.display = 'none';
+        });
+
+        // Afficher la vue ciblée
+        const target = views[navId];
+        if (!target) return;
+        const el = document.getElementById(target.id);
+        el.style.display = target.display;
+        document.getElementById('page-title').textContent = target.title;
+
+        // Init topologie au premier clic
+        if (navId === 'nav-topology' && !networkInstance) {
+            setTimeout(() => { networkInstance = initTopology(); }, 80);
+        }
+    });
+});
+
+// Initialiser la vue par défaut (traçage)
+Object.values(views).forEach(({ id }) => document.getElementById(id).style.display = 'none');
+document.getElementById('view-tracing').style.display = 'block';
+</script>
+</body>
+</html>
