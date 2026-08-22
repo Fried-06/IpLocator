@@ -134,6 +134,12 @@
                           style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);">!</span>
                 </a>
             </li>
+            <li class="mt-2" id="nav-item-settings-container">
+                <a href="#" id="nav-settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 border-l-2 border-transparent cursor-pointer">
+                    <i class="fa-solid fa-sliders w-4 text-center text-sm"></i>
+                    <span class="text-sm font-medium">Paramètres Réseau</span>
+                </a>
+            </li>
         </ul>
     </nav>
 
@@ -546,6 +552,9 @@
         <!-- ══════════════════════════════════════════════
              VUE SÉCURITÉ & ISOLATION
         ══════════════════════════════════════════════ -->
+        <!-- ══════════════════════════════════════════════
+             VUE SÉCURITÉ & ISOLATION
+        ══════════════════════════════════════════════ -->
         <div id="view-security" class="view-section max-w-5xl mx-auto space-y-6" style="display:none">
 
             <!-- Banner -->
@@ -637,6 +646,156 @@
             </div>
         </div>
 
+        <!-- ══════════════════════════════════════════════
+             VUE PARAMÈTRES (LIVE NETWORK & SETTINGS)
+        ══════════════════════════════════════════════ -->
+        <div id="view-settings" class="view-section max-w-5xl mx-auto space-y-6" style="display:none">
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-white font-bold text-base">Configuration Réseau &amp; Découverte Live</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Basculez entre le banc de test virtuel et un réseau d'infrastructure réel ASECNA.</p>
+                </div>
+                <button type="button" id="btn-test-snmp" class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-cyan bg-cyan/10 border border-cyan/30 hover:bg-cyan/20 transition-all">
+                    <i class="fa-solid fa-satellite-dish"></i> Tester la Connexion SNMP
+                </button>
+            </div>
+
+            <!-- Résultat du test SNMP -->
+            <div id="snmp-test-result" class="hidden"></div>
+
+            <form id="form-settings" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    <!-- Carte 1 : Mode de Fonctionnement -->
+                    <div class="kpi-card rounded-xl p-5 space-y-4" style="background:#111827;border:1px solid #1F2937;">
+                        <div class="flex items-center gap-2.5 text-primary text-sm font-semibold">
+                            <i class="fa-solid fa-toggle-on"></i> <h4>Mode de Fonctionnement</h4>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Moteur de Découverte</label>
+                            <select id="setting-mode" class="w-full rounded-lg px-3.5 py-2.5 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none">
+                                <option value="MOCK">Mode Simulation (Données Démo Virtuelles)</option>
+                                <option value="REAL_NETWORK">Mode Réseau Réel (Interrogation Live SNMP / SSH)</option>
+                            </select>
+                        </div>
+                        <p class="text-[11px] text-gray-500 italic">
+                            En mode Réel, l'application exécute les requêtes CDP/LLDP directement sur l'IP racine spécifiée.
+                        </p>
+                    </div>
+
+                    <!-- Carte 2 : Ancrage Réseau Cœur -->
+                    <div class="kpi-card rounded-xl p-5 space-y-4" style="background:#111827;border:1px solid #1F2937;">
+                        <div class="flex items-center gap-2.5 text-cyan text-sm font-semibold">
+                            <i class="fa-solid fa-sitemap"></i> <h4>Switch Cœur / Passerelle</h4>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Adresse IP Racine (Core)</label>
+                            <input type="text" id="setting-core-ip" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-cyan" placeholder="10.20.0.1" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Constructeur / OS</label>
+                            <select id="setting-core-brand" class="w-full rounded-lg px-3.5 py-2 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none">
+                                <option value="Cisco">Cisco IOS / IOS-XE</option>
+                                <option value="Huawei">Huawei VRP</option>
+                                <option value="Generic">Générique RFC 1213 MIB-II</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Carte 3 : Sécurité SNMP -->
+                    <div class="kpi-card rounded-xl p-5 space-y-4 md:col-span-2" style="background:#111827;border:1px solid #1F2937;">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5 text-warning text-sm font-semibold">
+                                <i class="fa-solid fa-shield-halved"></i> <h4>Protocole SNMP (Simple Network Management Protocol)</h4>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-gray-400">Version :</label>
+                                <select id="setting-snmp-version" class="rounded px-2.5 py-1 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none font-mono">
+                                    <option value="v2c">SNMP v2c</option>
+                                    <option value="v3">SNMP v3 (Chiffré)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Champs v2c -->
+                        <div id="snmp-v2c-fields" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Communauté SNMP (Lecture Seule)</label>
+                                <input type="text" id="setting-snmp-community" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-warning" placeholder="ex: ASECNA_READ ou public">
+                            </div>
+                        </div>
+
+                        <!-- Champs v3 -->
+                        <div id="snmp-v3-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Nom d'Utilisateur v3</label>
+                                <input type="text" id="setting-snmp-v3-user" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none" placeholder="secAdmin">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Protocole Authentification</label>
+                                <select id="setting-snmp-v3-auth-proto" class="w-full rounded-lg px-3.5 py-2 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none font-mono">
+                                    <option value="SHA">SHA (Recommandé)</option>
+                                    <option value="MD5">MD5</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Clé d'Authentification (Auth Key)</label>
+                                <input type="password" id="setting-snmp-v3-auth-key" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none" placeholder="••••••••">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Protocole Chiffrement / Priv</label>
+                                <select id="setting-snmp-v3-priv-proto" class="w-full rounded-lg px-3.5 py-2 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none font-mono">
+                                    <option value="AES">AES-128</option>
+                                    <option value="DES">DES</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Clé de Chiffrement (Privacy Key)</label>
+                                <input type="password" id="setting-snmp-v3-priv-key" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none" placeholder="••••••••">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carte 4 : Fallback SSH & Apparence -->
+                    <div class="kpi-card rounded-xl p-5 space-y-4 md:col-span-2" style="background:#111827;border:1px solid #1F2937;">
+                        <div class="flex items-center gap-2.5 text-gray-300 text-sm font-semibold">
+                            <i class="fa-solid fa-terminal"></i> <h4>Identifiants SSH &amp; Personnalisation</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Utilisateur SSH (Netmiko)</label>
+                                <input type="text" id="setting-ssh-user" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none" placeholder="admin">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Mot de Passe SSH</label>
+                                <input type="password" id="setting-ssh-pwd" class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none" placeholder="••••••••">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Thème Visuel</label>
+                                <select id="setting-theme" class="w-full rounded-lg px-3.5 py-2 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none">
+                                    <option value="Dark NOC">Dark NOC Premium (Défaut)</option>
+                                    <option value="Cyberpunk">Cyberpunk Neon</option>
+                                    <option value="Light Professional">Light Professional</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Chemin du Logo</label>
+                                <input type="text" id="setting-logo-path" class="w-full rounded-lg px-3.5 py-2 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none font-mono" value="../image/Logo_ASECNA.png">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit" id="btn-save-settings" class="btn-primary-glow px-6 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg, #059669 0%, #0284c7 100%);">
+                        <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Paramètres
+                    </button>
+                </div>
+            </form>
+        </div>
+
     </div><!-- /Content scrollable -->
 </main>
 
@@ -702,6 +861,7 @@
 <script src="ressources/js/topologie.js"></script>
 <script src="ressources/js/securite.js"></script>
 <script src="ressources/js/tableau_de_bord.js"></script>
+<script src="ressources/js/parametres.js"></script>
 
 <script>
 // ── Horloge ──
@@ -710,33 +870,25 @@ setInterval(() => {
     if (el) el.textContent = new Date().toLocaleTimeString('fr-FR');
 }, 1000);
 
-// ── Gestion du changement d'onglet (SPA) ──
 function afficherVue(viewId) {
-    const listeVues = ['view-dashboard', 'view-tracing', 'view-topology', 'view-security'];
+    const listeVues = ['view-dashboard', 'view-tracing', 'view-topology', 'view-security', 'view-settings'];
     
-    // Cacher toutes les vues
     listeVues.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.style.display = 'none';
-            el.classList.remove('hidden'); // Au cas où
+            el.classList.remove('hidden');
         }
     });
 
-    // Afficher la vue demandée
     const cible = document.getElementById(viewId);
     if (cible) {
         cible.style.display = (viewId === 'view-topology') ? 'flex' : 'block';
     }
 
-    // Initialiser les graphiques si on va sur le Dashboard
     if (viewId === 'view-dashboard') {
-        setTimeout(() => {
-            if (typeof initDashboardCharts === 'function') initDashboardCharts();
-        }, 50);
+        setTimeout(() => { if (typeof initDashboardCharts === 'function') initDashboardCharts(); }, 50);
     }
-    
-    // Initialiser la topologie si on va sur la Topologie
     if (viewId === 'view-topology') {
         setTimeout(() => {
             if (typeof initTopology === 'function' && !window._topoInit) {
@@ -746,6 +898,14 @@ function afficherVue(viewId) {
         }, 50);
     }
 }
+
+// Écouteur du bouton Paramètres
+document.getElementById('nav-settings')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    mettreAJourMenu('nav-settings', 'CONFIGURATION RÉSEAU & PARAMÈTRES');
+    afficherVue('view-settings');
+    if (typeof chargerParametres === 'function') chargerParametres();
+});
 
 // Écouteurs sur les éléments du menu
 document.getElementById('nav-dashboard')?.addEventListener('click', (e) => {
@@ -772,12 +932,21 @@ document.getElementById('nav-security')?.addEventListener('click', (e) => {
     afficherVue('view-security');
 });
 
+// Déconnexion
+document.getElementById('btn-deconnexion')?.addEventListener('click', () => {
+    if (typeof deconnecter === 'function') deconnecter();
+});
+
 function mettreAJourMenu(activeNavId, titre) {
     document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
     document.getElementById(activeNavId)?.classList.add('active');
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = titre;
 }
+
+// Initialisation au chargement
+if (typeof verifierSession === 'function') verifierSession();
+if (typeof appliquerRestrictions === 'function') appliquerRestrictions();
 
 // Vue par défaut à l'ouverture
 afficherVue('view-tracing');
