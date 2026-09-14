@@ -1,7 +1,9 @@
 import json
 import os
+import asyncio
 
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "settings.json")
+
 
 def get_current_settings():
     if os.path.exists(CONFIG_FILE):
@@ -11,6 +13,7 @@ def get_current_settings():
         except Exception:
             pass
     return {"mode": "MOCK", "core_switch_ip": "10.20.0.1", "snmp_community": "ASECNA_READ"}
+
 
 def get_topology_mock():
     return {
@@ -29,6 +32,7 @@ def get_topology_mock():
         ]
     }
 
+
 def get_metrics_mock():
     return {
         "total_equipements": 48,
@@ -37,12 +41,19 @@ def get_metrics_mock():
         "alertes_securite": 0
     }
 
+
 def tester_connexion_snmp(ip: str, version: str, community: str = "public", **v3_kwargs):
     """
-    Tente une requête SNMP get sysDescr (1.3.6.1.2.1.1.1.0) ou simule la réponse si en mode MOCK.
+    Tente une requête SNMP get sysName/sysDescr, ou simule la réponse si en mode MOCK.
+
+    NOTE TECHNIQUE (migration pysnmp 4.x -> 7.x) :
+    L'ancienne API synchrone 'pysnmp.hlapi.getCmd' a été retirée dans pysnmp >= 7.
+    On utilise désormais l'API asyncio 'pysnmp.hlapi.v1arch.asyncio', qui couvre
+    SNMPv1/v2c (suffisant pour ce projet). SNMPv3 n'est pas géré par cette voie
+    (voir la branche 'if version == "v3"' ci-dessous).
     """
     settings = get_current_settings()
-    
+
     # Si mode Mock ou IP locale de simulation
     if settings.get("mode") == "MOCK" or ip in ["10.20.0.1", "127.0.0.1"]:
         return {
@@ -54,39 +65,33 @@ def tester_connexion_snmp(ip: str, version: str, community: str = "public", **v3
             "message": f"Connexion SNMP ({version}) établie avec succès vers {ip}."
         }
 
-    # Tentative Réseau Réel via PySNMP
+    if version == "v3":
+        return {
+            "succes": False,
+            "message": "SNMPv3 n'est pas supporté par cette implémentation (limitation technique documentée dans le mémoire)."
+        }
+
+    # Tentative Réseau Réel via PySNMP (SNMPv1/v2c, API v1arch.asyncio)
     try:
-        from pysnmp.hlapi import (
-            getCmd, SnmpEngine, CommunityData, UsmUserData,
-            UdpTransportTarget, ContextData, ObjectType, ObjectIdentity,
-            usmHMACSHAAuthProtocol, usmHMACMD5AuthProtocol,
-            usmAesCfb128Protocol, usmDesCbcProtocol
+        return asyncio.run(_snmp_get_v2c(ip, community))
+    except Exception as e:
+        return {"succes": False, "message": f"Erreur SNMP: {str(e)}"}
+
+
+async def _snmp_get_v2c(ip: str, community: str):
+    from pysnmp.hlapi.v1arch.asyncio import (
+        SnmpDispatcher, CommunityData, UdpTransportTarget,
+        ObjectType, ObjectIdentity, get_cmd
+    )
+
+    with SnmpDispatcher() as dispatcher:
+        errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
+            dispatcher,
+            CommunityData(community, mpModel=1),  # mpModel=1 => SNMPv2c
+            await UdpTransportTarget.create((ip, 161), timeout=2.0, retries=1),
+            ObjectType(ObjectIdentity('1.3.6.1.2.1.1.5.0')),  # sysName
+            ObjectType(ObjectIdentity('1.3.6.1.2.1.1.1.0')),  # sysDescr
         )
-
-        auth_data = None
-        if version == "v2c":
-            auth_data = CommunityData(community, mpModel=1)
-        else: # v3
-            auth_proto = usmHMACSHAAuthProtocol if v3_kwargs.get("v3_auth_proto") == "SHA" else usmHMACMD5AuthProtocol
-            priv_proto = usmAesCfb128Protocol if v3_kwargs.get("v3_priv_proto") == "AES" else usmDesCbcProtocol
-            auth_data = UsmUserData(
-                v3_kwargs.get("v3_user"),
-                authKey=v3_kwargs.get("v3_auth_key"),
-                privKey=v3_kwargs.get("v3_priv_key"),
-                authProtocol=auth_proto,
-                privProtocol=priv_proto
-            )
-
-        iterator = getCmd(
-            SnmpEngine(),
-            auth_data,
-            UdpTransportTarget((ip, 161), timeout=2.0, retries=1),
-            ContextData(),
-            ObjectType(ObjectIdentity('1.3.6.1.2.1.1.5.0')), # sysName
-            ObjectType(ObjectIdentity('1.3.6.1.2.1.1.1.0'))  # sysDescr
-        )
-
-        errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
 
         if errorIndication:
             return {"succes": False, "message": str(errorIndication)}
@@ -103,5 +108,3 @@ def tester_connexion_snmp(ip: str, version: str, community: str = "public", **v3
                 "latence_ms": 2.1,
                 "message": f"Réponse reçue du Switch Réel {sysName}."
             }
-    except Exception as e:
-        return {"succes": False, "message": f"Erreur SNMP: {str(e)}"}
