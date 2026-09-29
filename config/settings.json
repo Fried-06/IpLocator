@@ -2,7 +2,7 @@
     "mode": "REAL_NETWORK",
     "core_switch_ip": "10.28.15.28",
     "core_switch_brand": "Cisco",
-    "snmp_version": "v2c",
+    "snmp_version": "v3",
     "snmp_community": "public",
     "snmp_v3_user": "asecna_admin",
     "snmp_v3_auth_key": "AuthKeySecure123",

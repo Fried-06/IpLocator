@@ -123,47 +123,85 @@ async def rechercher_equipement(cible: str):
     info_switch = None
     statut_snmp = tester_connexion_snmp(core_switch_ip, version=snmp_version, community=snmp_community)
     
-    nom_switch_detecte = info_switch.get("sysName") if (info_switch and info_switch.get("succes")) else f"Passerelle-{core_switch_ip}"
+    nom_switch_detecte = statut_snmp.get("sysName") if statut_snmp.get("succes") else f"Passerelle-{core_switch_ip}"
     
-    # 5. Déduction du chemin et du port (Wi-Fi ou Switch Ethernet)
-    # Détermination du type de connexion
+    # 5. Recherche algorithmique du chemin complet (Saut par saut)
+    from serveur.services.service_snmp import tracer_chemin_reseau
+    
     is_wifi = False
-    if "10.28." in ip_cible or "192.168." in ip_cible or "172." in ip_cible:
-        # Si on est sur le même sous-réseau sans accès SNMP switch complet
-        is_wifi = not statut_snmp.get("succes")
+    port_libelle = "Inconnu"
+    vlan_libelle = "VLAN Inconnu"
+    type_connexion = "Inconnu"
+    trajectoire_reelle = []
+    
+    # Noeud de départ (Serveur IpLocator)
+    trajectoire_reelle.append(NoeudTrajectoire(type="POSTE_DEPART", nom="Serveur IpLocator", port_sortie="Eth0"))
 
-    port_libelle = "Liaison Sans-Fil (Borne AP / Wi-Fi)" if is_wifi else "Port Dynamique (Ethernet)"
-    vlan_libelle = "VLAN Local (Défaut)" if is_wifi else "VLAN Réseau"
-    type_connexion = "Wi-Fi (Sans-fil)" if is_wifi else "Filaire RJ45"
-    emplacement = "Segment Réseau Sans-Fil (Zone Wi-Fi)" if is_wifi else f"Raccordé au Switch {nom_switch_detecte}"
-
-    if en_ligne or mac_trouvee != "N/A":
-        statut_str = "EN_LIGNE" if en_ligne else "HORS_LIGNE"
+    if statut_snmp.get("succes") and mac_trouvee != "N/A":
+        # Le switch coeur répond, on lance le traçage complet (saut par saut)
+        resultat_trace = tracer_chemin_reseau(core_switch_ip, mac_trouvee, snmp_version, snmp_community)
         
-        switch_rattachement = SwitchRattachement(
+        if resultat_trace.get("succes"):
+            port_libelle = resultat_trace.get("port_acces_final")
+            nom_dernier_switch = resultat_trace.get("dernier_switch_nom")
+            ip_dernier_switch = resultat_trace.get("dernier_switch_ip")
+            type_connexion = "Filaire RJ45"
+            vlan_libelle = "VLAN Réseau"
+            emplacement = f"Raccordé au Switch d'Accès {nom_dernier_switch} (Interface: {port_libelle})"
+            
+            # Reconstruction de la trajectoire visuelle
+            for etape in resultat_trace.get("chemin", []):
+                trajectoire_reelle.append(NoeudTrajectoire(
+                    type="SWITCH_CORE" if etape["ip"] == core_switch_ip else "SWITCH_ACCES", 
+                    nom=etape["nom"], 
+                    ip=etape["ip"], 
+                    port_entree=etape.get("port_entree", "Uplink"), 
+                    port_sortie=etape.get("port_sortie", "Inconnu")
+                ))
+            
+            # Ajout du noeud final
+            trajectoire_reelle.append(NoeudTrajectoire(type="EQUIPEMENT_CIBLE", nom=f"{nom_hote} ({vendor})", ip=ip_cible, port_entree="Eth0"))
+            
+            # On met à jour le switch de rattachement pour pointer sur le DERNIER switch
+            switch_rattachement_final = SwitchRattachement(
+                nom=nom_dernier_switch,
+                ip=ip_dernier_switch,
+                port_acces=port_libelle,
+                vlan=vlan_libelle,
+                vitesse_port="Auto-Negotiation (Actif)"
+            )
+        else:
+            is_wifi = True
+    else:
+        is_wifi = True
+
+    if is_wifi:
+        port_libelle = "Liaison Sans-Fil ou Switch Non Administrable"
+        vlan_libelle = "VLAN Local (Défaut)"
+        type_connexion = "Wi-Fi ou Hub"
+        emplacement = "Segment Réseau Sans-Fil ou derrière matériel passif"
+        switch_rattachement_final = SwitchRattachement(
             nom=nom_switch_detecte,
             ip=core_switch_ip,
             port_acces=port_libelle,
             vlan=vlan_libelle,
-            vitesse_port="Auto-Negotiation (Actif)" if en_ligne else "Non connecté"
+            vitesse_port="Non applicable"
         )
+        trajectoire_reelle.append(NoeudTrajectoire(type="SWITCH_CORE", nom=nom_switch_detecte, ip=core_switch_ip, port_entree="Uplink", port_sortie="LAN Wi-Fi"))
+        trajectoire_reelle.append(NoeudTrajectoire(type="EQUIPEMENT_CIBLE", nom=f"{nom_hote} ({vendor})", ip=ip_cible, port_entree="Eth0/Wlan0"))
 
-        trajectoire = [
-            NoeudTrajectoire(type="POSTE_DEPART", nom="Poste Opérateur (Local)", port_sortie="Interface Réseau"),
-            NoeudTrajectoire(type="SWITCH_CORE", nom=nom_switch_detecte, ip=core_switch_ip, port_entree="Uplink", port_sortie="LAN"),
-            NoeudTrajectoire(type="SWITCH_ACCES", nom=f"Point d'Accès / {type_connexion}", ip=core_switch_ip, port_entree="LAN", port_sortie=port_libelle),
-            NoeudTrajectoire(type="EQUIPEMENT_CIBLE", nom=f"{nom_hote} ({vendor})", ip=ip_cible, port_entree="Interface")
-        ]
-
+    if en_ligne or mac_trouvee != "N/A":
+        statut_str = "EN_LIGNE" if en_ligne else "HORS_LIGNE"
+        
         return ResultatTracage(
             equipement=f"{nom_hote} ({vendor})",
             ip=ip_cible,
             mac=mac_trouvee,
             statut=statut_str,
             latence_ms=latence,
-            switch_rattachement=switch_rattachement,
+            switch_rattachement=switch_rattachement_final,
             emplacement_physique=emplacement,
-            trajectoire_chemin=trajectoire
+            trajectoire_chemin=trajectoire_reelle
         )
     else:
         # Équipement introuvable sur le réseau réel
