@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from serveur.services.service_arp import resolve_name_to_ip, resolve_ip_to_mac, resolve_ip_to_hostname, get_mac_vendor
-from serveur.services.service_snmp import tracer_chemin_reseau, get_current_settings
+from serveur.services.service_snmp import tracer_chemin_reseau
+from serveur.routes.parametres import charger_parametres as get_current_settings
 from serveur.routes.auth import require_admin
 
 router = APIRouter()

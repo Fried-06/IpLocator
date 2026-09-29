@@ -321,18 +321,18 @@
                     <div class="flex flex-wrap items-center gap-2 mt-3">
                         <span class="text-[10px] text-gray-600 uppercase tracking-widest font-mono mr-1">Accès
                             rapide</span>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="AMHS">
-                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> AMHS
+                        <button type="button" class="btn-shortcut shortcut-badge" data-target="">
+                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> 
                         </button>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="SMT">
-                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> SMT
+                        <button type="button" class="btn-shortcut shortcut-badge" data-target="">
+                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> 
                         </button>
                         <button type="button" class="btn-shortcut shortcut-badge" data-target="FREDA">
                             <i class="fa-solid fa-bolt text-primary text-[9px]"></i> FREDA
                         </button>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="10.20.1.15">
+                        <button type="button" class="btn-shortcut shortcut-badge" data-target="">
                             <i class="fa-solid fa-network-wired text-cyan text-[9px]"></i>
-                            <span class="ip-addr">10.20.1.15</span>
+                            <span class="ip-addr"></span>
                         </button>
                     </div>
                 </div>
@@ -640,7 +640,7 @@
                                 <input type="text" id="sec-input-target"
                                     class="flex-1 rounded-lg px-4 py-2.5 text-sm text-white font-mono outline-none transition-all"
                                     style="background:#0F172A; border:1px solid #1F2937; caret-color:#10b981;"
-                                    placeholder="ex: 10.20.1.15 ou AMHS"
+                                    placeholder="ex:  ou "
                                     onfocus="this.style.borderColor='rgba(239,68,68,0.5)'; this.style.boxShadow='0 0 0 2px rgba(239,68,68,0.1)'"
                                     onblur="this.style.borderColor='#1F2937'; this.style.boxShadow='none'" required>
                                 <button type="button" id="sec-btn-detect"
@@ -650,7 +650,7 @@
                                 </button>
                             </div>
                             <p id="sec-detection-result" class="text-[11px] text-primary mt-2 hidden font-mono">
-                                <i class="fa-solid fa-check-circle"></i> Détecté : SW-BLOC-TECH-01 · Gi1/0/14
+                                <i class="fa-solid fa-check-circle"></i> Détecté : N/D-TECH-01 · N/D
                             </p>
                         </div>
 
@@ -752,7 +752,7 @@
                                     de Découverte</label>
                                 <select id="setting-mode"
                                     class="w-full rounded-lg px-3.5 py-2.5 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none">
-                                    <option value="MOCK">Mode Simulation (Données Démo Virtuelles)</option>
+                                    <option value="">Mode  (Données Démo Virtuelles)</option>
                                     <option value="REAL_NETWORK">Mode Réseau Réel (Interrogation Live SNMP / SSH)
                                     </option>
                                 </select>
@@ -776,7 +776,7 @@
                                     IP Racine (Core)</label>
                                 <input type="text" id="setting-core-ip"
                                     class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-cyan"
-                                    placeholder="10.20.0.1" required>
+                                    placeholder="" required>
                             </div>
                             <div>
                                 <label

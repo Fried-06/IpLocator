@@ -206,12 +206,12 @@ function ouvrirDrawer(nodeData) {
         badge.textContent = 'SWITCH CŒUR';
         badge.className = 'inline-block mt-2 px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded text-[10px] uppercase font-bold';
         document.getElementById('drawer-mac').textContent = '00:1A:2B:CORE';
-        document.getElementById('drawer-location').textContent = 'Salle Principale - Baie 01';
+        document.getElementById('drawer-location').textContent = 'Salle Principale - N/D';
     } else if (nodeData.group === 'ACCESS_SWITCH') {
         badge.textContent = 'SWITCH ACCÈS';
         badge.className = 'inline-block mt-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded text-[10px] uppercase font-bold';
         document.getElementById('drawer-mac').textContent = '00:1A:2B:ACCES';
-        document.getElementById('drawer-location').textContent = 'Étage 1 - Baie 05';
+        document.getElementById('drawer-location').textContent = 'Étage 1 - N/D';
     } else {
         badge.textContent = 'SERVEUR CRITIQUE';
         badge.className = 'inline-block mt-2 px-2 py-0.5 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded text-[10px] uppercase font-bold';

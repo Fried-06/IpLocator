@@ -1,5 +1,5 @@
 /**
- * parametres.js — Gestion de la configuration réseau dynamique (Live & Mock)
+ * parametres.js — Gestion de la configuration réseau dynamique (Live & )
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -136,8 +136,8 @@ async function chargerParametres() {
         if (!resp.ok) return;
         const data = await resp.json();
 
-        if (document.getElementById('setting-mode')) document.getElementById('setting-mode').value = data.mode || "MOCK";
-        if (document.getElementById('setting-core-ip')) document.getElementById('setting-core-ip').value = data.core_switch_ip || "10.20.0.1";
+        if (document.getElementById('setting-mode')) document.getElementById('setting-mode').value = data.mode || "";
+        if (document.getElementById('setting-core-ip')) document.getElementById('setting-core-ip').value = data.core_switch_ip || "";
         if (document.getElementById('setting-core-brand')) document.getElementById('setting-core-brand').value = data.core_switch_brand || "Cisco";
         
         const selVer = document.getElementById('setting-snmp-version');
