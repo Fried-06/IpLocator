@@ -1,20 +1,19 @@
-from fastapi import APIRouter
-from serveur.modeles.schemas import TopologieReseau, MetriquesDashboard
-from serveur.services.service_snmp import get_topology_mock, get_metrics_mock
+from fastapi import APIRouter, Depends
+from serveur.routes.auth import require_admin
+# Dans la réalité il faut interroger le switch ou une DB pour la topologie. 
+# Pour l'instant on retourne une structure vide conforme à la réalité (aucune donnée mock).
 
 router = APIRouter()
 
 @router.get("/topologie")
-async def obtenir_topologie():
-    """
-    Retourne la topologie réseau dynamique pour l'affichage du graphe vis-network.
-    """
-    return get_topology_mock()
+async def obtenir_topologie(user=Depends(require_admin)):
+    return {"noeuds": [], "liaisons": []}
 
-@router.get("/metriques", response_model=MetriquesDashboard)
-async def obtenir_metriques():
-    """
-    Retourne les métriques de base pour le tableau de bord NOC.
-    """
-    data = get_metrics_mock()
-    return MetriquesDashboard(**data)
+@router.get("/metriques")
+async def obtenir_metriques(user=Depends(require_admin)):
+    return {
+        "total_equipements": 0,
+        "equipements_hors_ligne": 0,
+        "ports_actifs": 0,
+        "alertes_securite": 0
+    }

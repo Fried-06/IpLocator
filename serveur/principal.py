@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from serveur.routes import decouverte, tracage, securite, auth, parametres
@@ -6,8 +7,7 @@ app = FastAPI(title="ASECNA IpLocator API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[import os
-os.getenv("FRONTEND_URL", "http://localhost:8000")],
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:8000")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
