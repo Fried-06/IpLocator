@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('btn-confirm-isolation');
         btn.disabled = true;
         try {
-            const rep = await fetch('http://localhost:8000/api/v1/securite/isoler', {
+            const rep = await fetch(`${API_BASE}/securite/isoler`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ip_equipement: targetInfo.equipement, raison: inputReason?.value, mot_de_passe_admin: inputPassword?.value })
             });
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.querySelector('.btn-restaurer').addEventListener('click', async () => {
             const pwd = prompt('Mot de passe Administrateur NOC :');
             if (!pwd) return;
-            const rep = await fetch('http://localhost:8000/api/v1/securite/restaurer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ip_equipement:info.equipement,raison:'Restauration',mot_de_passe_admin:pwd}) });
+            const rep = await fetch(`${API_BASE}/securite/restaurer`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ip_equipement:info.equipement,raison:'Restauration',mot_de_passe_admin:pwd}) });
             const data = await rep.json();
             if (rep.ok) {
                 document.getElementById(`sc-${id}`).innerHTML = `<span style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3)" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase font-mono">RESTAURÉ</span>`;

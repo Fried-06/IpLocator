@@ -46,7 +46,7 @@ async function chargerRaccourcisCritiques(machinesOptionnelles = null) {
             const headers = { 'Content-Type': 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            const response = await fetch('http://localhost:8000/api/v1/supervision/machines', { headers });
+            const response = await fetch(`${API_BASE}/supervision/machines`, { headers });
             if (response.ok) {
                 const data = await response.json();
                 machines = data.machines || [];
@@ -128,7 +128,7 @@ async function lancerTracage(target, btnElement) {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/v1/tracage/recherche?cible=${encodeURIComponent(target)}`);
+        const response = await fetch(`${API_BASE}/tracage/recherche?cible=${encodeURIComponent(target)}`);
         
         if (response.ok) {
             const data = await response.json();

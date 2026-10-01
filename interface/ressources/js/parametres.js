@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const resp = await fetch('http://localhost:8000/api/v1/parametres/tester', {
+            const resp = await fetch(`${API_BASE}/parametres/tester`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const resp = await fetch('http://localhost:8000/api/v1/parametres', {
+            const resp = await fetch(`${API_BASE}/parametres`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function chargerParametres() {
     try {
-        const resp = await fetch('http://localhost:8000/api/v1/parametres');
+        const resp = await fetch(`${API_BASE}/parametres`);
         if (!resp.ok) return;
         const data = await resp.json();
 
