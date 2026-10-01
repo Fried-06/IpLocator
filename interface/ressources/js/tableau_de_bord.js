@@ -124,7 +124,7 @@ function getAuthHeaders() {
 async function chargerSupervision() {
     const tbody = document.getElementById('tbody-supervision');
     try {
-        const response = await fetch('http://localhost:8000/api/v1/supervision/machines', {
+        const response = await fetch(`${API_BASE}/supervision/machines`, {
             method: 'GET',
             headers: getAuthHeaders()
         });
@@ -477,7 +477,7 @@ function rendreTableauSupervision() {
  */
 async function basculerCriticiteMachine(machineId, estCritique) {
     try {
-        const response = await fetch(`http://localhost:8000/api/v1/supervision/machines/${machineId}/critique?est_critique=${estCritique}`, {
+        const response = await fetch(`${API_BASE}/supervision/machines/${machineId}/critique?est_critique=${estCritique}`, {
             method: 'PUT',
             headers: getAuthHeaders()
         });
@@ -503,7 +503,7 @@ async function supprimerMachineSupervision(machineId, ip) {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/v1/supervision/machines/${machineId}`, {
+        const response = await fetch(`${API_BASE}/supervision/machines/${machineId}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
@@ -530,7 +530,7 @@ async function declencherSondageManuel() {
     if (icon) icon.classList.add('fa-spin');
 
     try {
-        const response = await fetch('http://localhost:8000/api/v1/supervision/sonder', {
+        const response = await fetch(`${API_BASE}/supervision/sonder`, {
             method: 'POST',
             headers: getAuthHeaders()
         });
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch('http://localhost:8000/api/v1/supervision/machines', {
+            const response = await fetch(`${API_BASE}/supervision/machines`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({

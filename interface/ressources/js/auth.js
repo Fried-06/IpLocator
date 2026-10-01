@@ -4,7 +4,7 @@
  */
 
 const AUTH_KEY = 'asecna_session';
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = `http://${window.location.hostname}:8000/api/v1`;
 
 // ──────────────────────────────────────────────
 // Session Management

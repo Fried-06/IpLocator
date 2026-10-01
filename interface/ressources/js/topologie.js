@@ -66,7 +66,7 @@ async function initTopology() {
     if (drawer) drawer.classList.add('translate-x-full');
 
     try {
-        const response = await fetch('http://localhost:8000/api/v1/decouverte/topologie');
+        const response = await fetch(`${API_BASE}/decouverte/topologie`);
         if (!response.ok) throw new Error('Erreur réseau');
         
         const data = await response.json();
