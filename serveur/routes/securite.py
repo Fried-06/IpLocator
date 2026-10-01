@@ -1,56 +1,45 @@
-from fastapi import APIRouter, HTTPException
-from datetime import datetime
-from serveur.modeles.schemas import RequeteIsolation, ReponseIsolation
-from serveur.services.service_ssh import shutdown_port, no_shutdown_port
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from serveur.services.service_ssh import modifier_etat_port, log_audit
+from serveur.routes.auth import require_admin
+import sqlite3
 
 router = APIRouter()
 
-@router.post("/isoler", response_model=ReponseIsolation)
-async def isoler_equipement(requete: RequeteIsolation):
-    """
-    Simule la désactivation administrative d'un port (shutdown) pour isoler un équipement.
-    """
-    if requete.mot_de_passe_admin != "admin123":
-        raise HTTPException(status_code=403, detail="Mot de passe administrateur incorrect.")
-    
-    # Mock lookup de l'IP pour trouver le switch et le port
-    switch_ip = "10.20.0.12"
-    switch_nom = "SW-BLOC-TECH-01"
-    port = "Gi1/0/14"
-    
-    # Exécution du mock SSH
-    succes = shutdown_port(switch_ip, port)
-    
-    if succes:
-        return ReponseIsolation(
-            statut="SUCCES",
-            message=f"Le port {port} du switch {switch_nom} a été désactivé avec succès.",
-            horodatage=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-    else:
-        raise HTTPException(status_code=500, detail="Échec de l'exécution SSH sur le switch.")
+class RequeteIsolation(BaseModel):
+    ip_cible: str
+    mac_cible: str
+    motif: str
+    # Les switchs et ports devraient être déduits du traçage, donc on les prend
+    ip_switch: str
+    port: str
 
-@router.post("/restaurer", response_model=ReponseIsolation)
-async def restaurer_equipement(requete: RequeteIsolation):
-    """
-    Simule la réactivation d'un port (no shutdown).
-    """
-    if requete.mot_de_passe_admin != "admin123":
-        raise HTTPException(status_code=403, detail="Mot de passe administrateur incorrect.")
+@router.post("/isoler")
+async def isoler_equipement(requete: RequeteIsolation, user=Depends(require_admin)):
+    resultat = modifier_etat_port(requete.ip_switch, requete.port, "ISOLER")
+    statut = "SUCCES" if resultat["succes"] else "ECHEC"
+    log_audit(user["sub"], requete.ip_cible, requete.ip_switch, requete.port, requete.motif, "ISOLER", statut)
     
-    # Mock lookup
-    switch_ip = "10.20.0.12"
-    switch_nom = "SW-BLOC-TECH-01"
-    port = "Gi1/0/14"
+    if not resultat["succes"]:
+        raise HTTPException(status_code=502, detail=resultat["message"])
+    return {"succes": True, "message": resultat["message"]}
+
+@router.post("/restaurer")
+async def restaurer_equipement(requete: RequeteIsolation, user=Depends(require_admin)):
+    resultat = modifier_etat_port(requete.ip_switch, requete.port, "RESTAURER")
+    statut = "SUCCES" if resultat["succes"] else "ECHEC"
+    log_audit(user["sub"], requete.ip_cible, requete.ip_switch, requete.port, requete.motif, "RESTAURER", statut)
     
-    # Exécution du mock SSH
-    succes = no_shutdown_port(switch_ip, port)
-    
-    if succes:
-        return ReponseIsolation(
-            statut="SUCCES",
-            message=f"Le port {port} du switch {switch_nom} a été réactivé avec succès.",
-            horodatage=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-    else:
-        raise HTTPException(status_code=500, detail="Échec de l'exécution SSH sur le switch.")
+    if not resultat["succes"]:
+        raise HTTPException(status_code=502, detail=resultat["message"])
+    return {"succes": True, "message": resultat["message"]}
+
+@router.get("/historique")
+async def obtenir_historique(user=Depends(require_admin)):
+    try:
+        conn = sqlite3.connect("iplocator.db")
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT * FROM audit_logs ORDER BY date DESC LIMIT 50").fetchall()
+        return {"historique": [dict(r) for r in rows]}
+    except:
+        return {"historique": []}

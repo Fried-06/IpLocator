@@ -135,3 +135,28 @@ function appliquerRestrictions() {
         if (navSec) navSec.style.display = 'none';
     }
 }
+
+
+// Monkey-patch global fetch to automatically inject the JWT token
+const originalFetch = window.fetch;
+window.fetch = async function() {
+    let [resource, config] = arguments;
+    if (typeof resource === 'string' && resource.includes('/api/v1/')) {
+        const session = getSession();
+        if (session && session.token) {
+            config = config || {};
+            if (config.headers instanceof Headers) {
+                if (!config.headers.has('Authorization')) {
+                    config.headers.set('Authorization', 'Bearer ' + session.token);
+                }
+            } else {
+                config.headers = config.headers || {};
+                if (!config.headers['Authorization']) {
+                    config.headers['Authorization'] = 'Bearer ' + session.token;
+                }
+            }
+        }
+    }
+    const response = await originalFetch(resource, config);
+    return response;
+};

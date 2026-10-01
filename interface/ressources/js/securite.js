@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputReason          = document.getElementById('sec-input-reason');
     const inputPassword        = document.getElementById('sec-input-password');
 
-    let targetInfo = { equipement: '', switchNom: 'SW-BLOC-TECH-01', port: 'Gi1/0/14' };
+    let targetInfo = { equipement: '', switchNom: 'N/D-TECH-01', port: 'N/D' };
 
     btnDetect?.addEventListener('click', () => {
         const v = inputTarget?.value?.trim();

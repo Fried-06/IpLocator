@@ -250,29 +250,29 @@
         <!-- Separator -->
         <div class="sep my-6"></div>
 
-        <!-- Demo credentials -->
+        <!-- Accès rapides -->
         <div>
-            <p class="text-gray-600 text-[10px] uppercase tracking-widest text-center mb-3">Comptes de démonstration</p>
+            <p class="text-gray-600 text-[10px] uppercase tracking-widest text-center mb-3">Profils d'Accès Préconfigurés</p>
             <div class="grid grid-cols-2 gap-3">
-                <button type="button" class="demo-btn text-left p-3 rounded-lg bg-[#0B1120] border border-[#1F2937] hover:border-emerald-500/30 transition-all group"
-                        data-id="admin" data-pwd="admin123">
+                <button type="button" class="-btn text-left p-3 rounded-lg bg-[#0B1120] border border-[#1F2937] hover:border-emerald-500/30 transition-all group"
+                        data-id="admin" data-pwd="">
                     <div class="flex items-center gap-2 mb-1.5">
                         <div class="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
                             <i class="fa-solid fa-crown text-emerald-400 text-[8px]"></i>
                         </div>
                         <span class="role-pill role-admin">ADMIN</span>
                     </div>
-                    <p class="text-gray-400 text-xs font-mono">admin / admin123</p>
+                    <p class="text-gray-400 text-xs font-mono">admin / </p>
                 </button>
-                <button type="button" class="demo-btn text-left p-3 rounded-lg bg-[#0B1120] border border-[#1F2937] hover:border-amber-500/30 transition-all group"
-                        data-id="operator" data-pwd="user123">
+                <button type="button" class="-btn text-left p-3 rounded-lg bg-[#0B1120] border border-[#1F2937] hover:border-amber-500/30 transition-all group"
+                        data-id="operator" data-pwd="">
                     <div class="flex items-center gap-2 mb-1.5">
                         <div class="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
                             <i class="fa-solid fa-user text-amber-400 text-[8px]"></i>
                         </div>
                         <span class="role-pill role-op">OPÉRATEUR</span>
                     </div>
-                    <p class="text-gray-400 text-xs font-mono">operator / user123</p>
+                    <p class="text-gray-400 text-xs font-mono">operator / </p>
                 </button>
             </div>
         </div>
@@ -340,8 +340,8 @@
             }
         };
 
-        // Demo buttons
-        document.querySelectorAll('.demo-btn').forEach(btn => {
+        //  buttons
+        document.querySelectorAll('.-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.getElementById('input-id').value = btn.dataset.id;
                 document.getElementById('input-pwd').value = btn.dataset.pwd;

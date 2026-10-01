@@ -1,179 +1,116 @@
 import re
-import socket
-from fastapi import APIRouter
-from serveur.modeles.schemas import ResultatTracage, SwitchRattachement, NoeudTrajectoire
-from serveur.routes.parametres import charger_parametres
-from serveur.services.service_arp import (
-    ping_host,
-    resolve_ip_to_mac,
-    resolve_name_to_ip,
-    resolve_ip_to_hostname,
-    get_mac_vendor
-)
-from serveur.services.service_snmp import tester_connexion_snmp
+import logging
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 
+from serveur.services.service_arp import (
+    resolve_name_to_ip, resolve_ip_to_mac,
+    resolve_ip_to_hostname, get_mac_vendor, ping_host
+)
+from serveur.services.service_snmp import tracer_chemin_reseau, obtenir_mac_depuis_switch_arp
+from serveur.routes.parametres import charger_parametres as get_current_settings
+from serveur.routes.auth import require_admin
+
+logger = logging.getLogger("routes.tracage")
 router = APIRouter()
 
-@router.get("/recherche", response_model=ResultatTracage)
-async def rechercher_equipement(cible: str):
-    """
-    Recherche un équipement et génère un rapport complet incluant le chemin réseau.
-    Gère le mode MOCK (données pédagogiques ASECNA) et le mode REAL_NETWORK (vrai réseau Wi-Fi/Ethernet).
-    """
+class RequeteTracage(BaseModel):
+    cible: str
+
+@router.get("/recherche")
+async def executer_tracage(cible: str, user=Depends(require_admin)):
     cible = cible.strip()
-    parametres = charger_parametres()
-    mode = parametres.get("mode", "MOCK")
-
-    # Si la cible est un nom d'hôte, on tente de trouver son IP
-    ip_cible = cible
-    nom_cible = cible
+    is_ip = re.match(r"^(\d{1,3}\.){3}\d{1,3}$", cible)
+    ip_address = cible if is_ip else resolve_name_to_ip(cible)
     
-    # Vérification si c'est déjà une IP
-    est_ip = bool(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", cible))
-    
-    if not est_ip:
-        ip_resolue = resolve_name_to_ip(cible)
-        if ip_resolue:
-            ip_cible = ip_resolue
-        else:
-            ip_cible = cible
-
-    # ═════════════════════════════════════════════════════════════════
-    # MODE 1 : MOCK / SIMULATION (Pour présentations ou hors ligne)
-    # ═════════════════════════════════════════════════════════════════
-    if mode == "MOCK":
-        cible_lower = cible.lower()
-        if "amhs" in cible_lower or ip_cible in ["10.20.1.15", "10.20.0.1"]:
-            return ResultatTracage(
-                equipement="Serveur AMHS (Aéronautique)",
-                ip="10.20.1.15",
-                mac="00:1A:2B:3C:4D:5E",
-                statut="EN_LIGNE",
-                latence_ms=1.8,
-                switch_rattachement=SwitchRattachement(
-                    nom="SW-BLOC-TECH-01",
-                    ip="10.20.0.12",
-                    port_acces="GigabitEthernet 1/0/14",
-                    vlan="VLAN 10 (AFTN/AMHS)",
-                    vitesse_port="1 Gbps / Full Duplex"
-                ),
-                emplacement_physique="Bloc Technique - Salle Serveurs BGD - Baie 03 / Slot 4",
-                trajectoire_chemin=[
-                    NoeudTrajectoire(type="POSTE_DEPART", nom="Poste Opérateur NOC", port_sortie="Eth0"),
-                    NoeudTrajectoire(type="SWITCH_CORE", nom="SW-CORE-ASECNA", ip="10.20.0.1", port_entree="Gi0/1", port_sortie="Gi0/24"),
-                    NoeudTrajectoire(type="SWITCH_ACCES", nom="SW-BLOC-TECH-01", ip="10.20.0.12", port_entree="Gi0/24", port_sortie="Gi1/0/14"),
-                    NoeudTrajectoire(type="EQUIPEMENT_CIBLE", nom="Serveur AMHS", ip="10.20.1.15", port_entree="Eth0")
-                ]
-            )
-        elif "smt" in cible_lower or ip_cible == "10.20.1.20":
-            return ResultatTracage(
-                equipement="Serveur SMT (Météo)",
-                ip="10.20.1.20",
-                mac="AA:BB:CC:DD:EE:FF",
-                statut="EN_LIGNE",
-                latence_ms=2.1,
-                switch_rattachement=SwitchRattachement(
-                    nom="SW-BLOC-TECH-02",
-                    ip="10.20.0.13",
-                    port_acces="GigabitEthernet 1/0/2",
-                    vlan="VLAN 20 (METEO)",
-                    vitesse_port="1 Gbps / Full Duplex"
-                ),
-                emplacement_physique="Bloc Technique - Salle Serveurs BGD - Baie 02",
-                trajectoire_chemin=[
-                    NoeudTrajectoire(type="POSTE_DEPART", nom="Poste Opérateur NOC", port_sortie="Eth0"),
-                    NoeudTrajectoire(type="SWITCH_CORE", nom="SW-CORE-ASECNA", ip="10.20.0.1", port_entree="Gi0/1", port_sortie="Gi0/20"),
-                    NoeudTrajectoire(type="SWITCH_ACCES", nom="SW-BLOC-TECH-02", ip="10.20.0.13", port_entree="Gi0/20", port_sortie="Gi1/0/2"),
-                    NoeudTrajectoire(type="EQUIPEMENT_CIBLE", nom="Serveur SMT", ip="10.20.1.20", port_entree="Eth0")
-                ]
-            )
-        else:
-            return ResultatTracage(
-                equipement="Équipement Simulation Non Trouvé",
-                ip=ip_cible,
-                mac="N/A",
-                statut="HORS_LIGNE",
-                latence_ms=0.0,
-                switch_rattachement=None,
-                emplacement_physique="Non localisé dans la maquette MOCK",
-                trajectoire_chemin=[]
-            )
-
-    # ═════════════════════════════════════════════════════════════════
-    # MODE 2 : REAL_NETWORK (Vrai Réseau Physique / Wi-Fi / Ethernet)
-    # ═════════════════════════════════════════════════════════════════
-    # 1. Test de connectivité Réel (Ping)
-    en_ligne, latence = ping_host(ip_cible, timeout_ms=1200)
-
-    # 2. Résolution ARP réelle
-    mac_trouvee = resolve_ip_to_mac(ip_cible) or "N/A"
-    vendor = get_mac_vendor(mac_trouvee)
-    
-    # 3. Nom d'hôte réel
-    nom_hote = resolve_ip_to_hostname(ip_cible) if en_ligne else cible
-    if nom_hote == f"Hôte-{ip_cible}" and vendor != "Générique / Inconnu":
-        nom_hote = f"Équipement {vendor}"
-
-    # Récupération des paramètres réseau configurés
-    core_switch_ip = parametres.get("core_switch_ip", "192.168.1.1")
-    snmp_community = parametres.get("snmp_community", "public")
-    snmp_version = parametres.get("snmp_version", "v2c")
-
-    # 4. Test si le Switch/Routeur configuré répond en SNMP
-    info_switch = None
-    statut_snmp = tester_connexion_snmp(core_switch_ip, version=snmp_version, community=snmp_community)
-    
-    nom_switch_detecte = info_switch.get("sysName") if (info_switch and info_switch.get("succes")) else f"Passerelle-{core_switch_ip}"
-    
-    # 5. Déduction du chemin et du port (Wi-Fi ou Switch Ethernet)
-    # Détermination du type de connexion
-    is_wifi = False
-    if "10.28." in ip_cible or "192.168." in ip_cible or "172." in ip_cible:
-        # Si on est sur le même sous-réseau sans accès SNMP switch complet
-        is_wifi = not statut_snmp.get("succes")
-
-    port_libelle = "Liaison Sans-Fil (Borne AP / Wi-Fi)" if is_wifi else "Port Dynamique (Ethernet)"
-    vlan_libelle = "VLAN Local (Défaut)" if is_wifi else "VLAN Réseau"
-    type_connexion = "Wi-Fi (Sans-fil)" if is_wifi else "Filaire RJ45"
-    emplacement = "Segment Réseau Sans-Fil (Zone Wi-Fi)" if is_wifi else f"Raccordé au Switch {nom_switch_detecte}"
-
-    if en_ligne or mac_trouvee != "N/A":
-        statut_str = "EN_LIGNE" if en_ligne else "HORS_LIGNE"
+    if not ip_address:
+        raise HTTPException(status_code=404, detail="Cible introuvable (impossible de résoudre l'adresse IP)")
         
-        switch_rattachement = SwitchRattachement(
-            nom=nom_switch_detecte,
-            ip=core_switch_ip,
-            port_acces=port_libelle,
-            vlan=vlan_libelle,
-            vitesse_port="Auto-Negotiation (Actif)" if en_ligne else "Non connecté"
+    en_ligne, latence = ping_host(ip_address, timeout_ms=800)
+    mac = resolve_ip_to_mac(ip_address)
+
+    settings = get_current_settings()
+    ip_depart = settings.get("core_switch_ip")
+    comm = settings.get("snmp_community", "public")
+    if comm == "********":
+        comm = "public"
+
+    gateway_ip = settings.get("gateway_ip")
+
+    # Si la MAC n'est pas dans la table ARP locale de la machine hôte :
+    # 1. Tenter d'interroger la table ARP de la passerelle (pour joindre d'autres sous-réseaux)
+    if not mac and gateway_ip:
+        mac = await obtenir_mac_depuis_switch_arp(gateway_ip, ip_address, comm)
+
+    # 2. Tenter d'interroger la table ARP du switch cœur via SNMP
+    if not mac and ip_depart:
+        mac = await obtenir_mac_depuis_switch_arp(ip_depart, ip_address, comm)
+    
+    if not mac:
+        raise HTTPException(
+            status_code=404, 
+            detail="Cible introuvable dans la table ARP locale et switch (équipement éteint ou inaccessible)"
         )
 
-        trajectoire = [
-            NoeudTrajectoire(type="POSTE_DEPART", nom="Poste Opérateur (Local)", port_sortie="Interface Réseau"),
-            NoeudTrajectoire(type="SWITCH_CORE", nom=nom_switch_detecte, ip=core_switch_ip, port_entree="Uplink", port_sortie="LAN"),
-            NoeudTrajectoire(type="SWITCH_ACCES", nom=f"Point d'Accès / {type_connexion}", ip=core_switch_ip, port_entree="LAN", port_sortie=port_libelle),
-            NoeudTrajectoire(type="EQUIPEMENT_CIBLE", nom=f"{nom_hote} ({vendor})", ip=ip_cible, port_entree="Interface")
-        ]
-
-        return ResultatTracage(
-            equipement=f"{nom_hote} ({vendor})",
-            ip=ip_cible,
-            mac=mac_trouvee,
-            statut=statut_str,
-            latence_ms=latence,
-            switch_rattachement=switch_rattachement,
-            emplacement_physique=emplacement,
-            trajectoire_chemin=trajectoire
-        )
+    hostname = resolve_ip_to_hostname(ip_address) or "--"
+    constructeur = get_mac_vendor(mac)
+    if hostname != "--":
+        nom_affiche = hostname
+    elif constructeur != "Inconnu":
+        nom_affiche = f"{constructeur} ({ip_address})"
     else:
-        # Équipement introuvable sur le réseau réel
-        return ResultatTracage(
-            equipement=f"Équipement {cible}",
-            ip=ip_cible,
-            mac="N/A",
-            statut="HORS_LIGNE",
-            latence_ms=0.0,
-            switch_rattachement=None,
-            emplacement_physique="Équipement introuvable ou injoignable sur le réseau actuel",
-            trajectoire_chemin=[]
-        )
+        nom_affiche = f"Hôte-{ip_address}"
+
+    switch_info = None
+    trajectoire = []
+
+    if ip_depart:
+        try:
+            res_trace = await tracer_chemin_reseau(
+                ip_depart, 
+                mac, 
+                settings.get("snmp_version", "v2c"), 
+                comm
+            )
+            if res_trace.get("succes") and res_trace.get("port_acces_final"):
+                switch_info = {
+                    "nom": res_trace.get("dernier_switch_nom", ip_depart),
+                    "ip": res_trace.get("dernier_switch_ip", ip_depart),
+                    "port_acces": res_trace.get("port_acces_final", "--"),
+                    "vitesse_port": res_trace.get("vitesse", "--"),
+                    "vlan": res_trace.get("vlan", "--")
+                }
+                trajectoire = res_trace.get("chemin", [])
+                
+                # Enregistrer immédiatement l'équipement dans la cartographie réseau
+                from serveur.routes.decouverte import enregistrer_noeud_topologie
+                enregistrer_noeud_topologie(
+                    ip=ip_address,
+                    mac=mac,
+                    nom=nom_affiche,
+                    switch_ip=switch_info["ip"],
+                    switch_nom=switch_info["nom"],
+                    port=switch_info["port_acces"],
+                    vlan=switch_info["vlan"],
+                    vitesse=switch_info["vitesse_port"],
+                    statut="EN_LIGNE" if en_ligne else "HORS_LIGNE"
+                )
+            else:
+                logger.warning(f"Trace SNMP échouée pour MAC {mac} sur {ip_depart}: {res_trace.get('message')}")
+        except Exception as e:
+            logger.exception(f"Erreur inattendue durant le traçage SNMP: {e}")
+
+    return {
+        "succes": True,
+        "equipement": nom_affiche,
+        "ip": ip_address,
+        "mac": mac,
+        "hostname": hostname,
+        "constructeur": constructeur,
+        "latence_ms": latence if en_ligne else None,
+        "statut": "EN_LIGNE" if (en_ligne or mac) else "HORS_LIGNE",
+        "switch_rattachement": switch_info,
+        "emplacement_physique": "--",
+        "trajectoire_chemin": trajectoire
+    }
