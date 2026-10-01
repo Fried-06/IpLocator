@@ -1,16 +1,11 @@
 {
-    "mode": "REAL_NETWORK",
-    "core_switch_ip": "10.28.15.28",
+    "core_switch_ip": "10.28.12.99",
     "core_switch_brand": "Cisco",
-    "snmp_version": "v3",
+    "snmp_version": "v2c",
     "snmp_community": "public",
-    "snmp_v3_user": "asecna_admin",
-    "snmp_v3_auth_key": "AuthKeySecure123",
-    "snmp_v3_priv_key": "PrivKeySecure123",
-    "snmp_v3_auth_proto": "SHA",
-    "snmp_v3_priv_proto": "AES",
     "ssh_username": "admin",
-    "ssh_password": "adminpassword",
-    "theme": "Dark NOC",
+    "ssh_password": "********",
+    "gateway_ip": "10.28.16.1",
+    "theme": "Light Professional",
     "custom_logo_path": "../image/Logo_ASECNA.png"
 }

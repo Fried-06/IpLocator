@@ -1,25 +1,59 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialiser quand on clique sur l'onglet Topologie pour la première fois
     const navTopology = document.getElementById('nav-topology');
     let networkInstance = null;
 
+    // 1. Initialiser ou rafraîchir à chaque clic sur l'onglet Topologie
     if (navTopology) {
         navTopology.addEventListener('click', () => {
-            if (!networkInstance) {
-                // Petit délai pour laisser le conteneur s'afficher
-                setTimeout(() => {
-                    networkInstance = initTopology();
-                }, 100);
+            setTimeout(async () => {
+                networkInstance = await initTopology();
+            }, 100);
+        });
+    }
+
+    // 2. Bouton "Ré-explorer" dans la barre d'outils
+    const btnReExplore = document.getElementById('btn-re-explore');
+    if (btnReExplore) {
+        btnReExplore.addEventListener('click', async () => {
+            const originalHtml = btnReExplore.innerHTML;
+            btnReExplore.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> Exploration...';
+            btnReExplore.disabled = true;
+            try {
+                networkInstance = await initTopology();
+            } finally {
+                btnReExplore.innerHTML = originalHtml;
+                btnReExplore.disabled = false;
             }
         });
     }
 
-    // Gestion du panneau latéral (Drawer)
+    // 3. Gestion du panneau latéral (Drawer)
     const btnCloseDrawer = document.getElementById('btn-close-drawer');
     const drawer = document.getElementById('topology-drawer');
     if (btnCloseDrawer && drawer) {
         btnCloseDrawer.addEventListener('click', () => {
             drawer.classList.add('translate-x-full');
+        });
+    }
+
+    // 4. Action "Tracer cet équipement" depuis le drawer
+    const drawerTraceBtn = drawer ? drawer.querySelector('button.btn-primary-glow') : null;
+    if (drawerTraceBtn) {
+        drawerTraceBtn.addEventListener('click', () => {
+            const targetIp = document.getElementById('drawer-ip')?.textContent?.trim();
+            if (targetIp && targetIp !== '--') {
+                drawer.classList.add('translate-x-full');
+                const navTracing = document.getElementById('nav-tracing');
+                if (navTracing) navTracing.click();
+                const inputTarget = document.getElementById('input-target');
+                if (inputTarget) {
+                    inputTarget.value = targetIp;
+                    const formTracing = document.getElementById('form-tracing');
+                    if (formTracing) {
+                        formTracing.dispatchEvent(new Event('submit'));
+                    }
+                }
+            }
         });
     }
 });
@@ -28,7 +62,6 @@ async function initTopology() {
     const container = document.getElementById('conteneur-topologie');
     if (!container) return null;
 
-    // Masquer le drawer au chargement
     const drawer = document.getElementById('topology-drawer');
     if (drawer) drawer.classList.add('translate-x-full');
 
@@ -38,7 +71,6 @@ async function initTopology() {
         
         const data = await response.json();
         
-        // Configuration Vis-Network personnalisée (NOC Dark Mode)
         const options = {
             nodes: {
                 borderWidth: 2,
@@ -65,14 +97,14 @@ async function initTopology() {
                 font: {
                     color: '#9ca3af',
                     size: 10,
-                    background: '#1E222D', // Couleur du fond bg-card
+                    background: '#1E222D',
                     strokeWidth: 0
                 }
             },
             groups: {
                 CORE_SWITCH: {
                     color: {
-                        background: 'rgba(16, 185, 129, 0.1)', // primary/10
+                        background: 'rgba(16, 185, 129, 0.1)',
                         border: '#10B981',
                         highlight: {
                             background: 'rgba(16, 185, 129, 0.3)',
@@ -85,7 +117,7 @@ async function initTopology() {
                 },
                 ACCESS_SWITCH: {
                     color: {
-                        background: 'rgba(59, 130, 246, 0.1)', // blue-500/10
+                        background: 'rgba(59, 130, 246, 0.1)',
                         border: '#3B82F6',
                         highlight: {
                             background: 'rgba(59, 130, 246, 0.3)',
@@ -97,7 +129,7 @@ async function initTopology() {
                 },
                 SERVER: {
                     color: {
-                        background: 'rgba(6, 182, 212, 0.1)', // cyan-500/10
+                        background: 'rgba(6, 182, 212, 0.1)',
                         border: '#06B6D4',
                         highlight: {
                             background: 'rgba(6, 182, 212, 0.3)',
@@ -113,7 +145,7 @@ async function initTopology() {
                 barnesHut: {
                     gravitationalConstant: -2000,
                     centralGravity: 0.3,
-                    springLength: 150,
+                    springLength: 160,
                     springConstant: 0.04,
                     damping: 0.09
                 }
@@ -126,9 +158,7 @@ async function initTopology() {
             }
         };
 
-        // Création du Dataset — Nettoyage des labels (suppression astérisques)
         const nodes = new vis.DataSet(data.noeuds.map(n => {
-            // Supprimer les balises *texte* générées par le backend
             if (n.label) {
                 n.label = n.label.replace(/\*/g, '');
             }
@@ -144,7 +174,6 @@ async function initTopology() {
 
         const network = new vis.Network(container, networkData, options);
 
-        // Événements clic pour ouvrir le Drawer
         network.on("click", function (params) {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
@@ -157,26 +186,19 @@ async function initTopology() {
 
         // Bouton Recentrer
         document.getElementById('btn-center-view')?.addEventListener('click', () => {
-            network.fit({ animation: { duration: 1000, easingFunction: 'easeInOutQuad' } });
+            network.fit({ animation: { duration: 800, easingFunction: 'easeInOutQuad' } });
         });
 
         // Filtre Équipements Critiques
         document.getElementById('toggle-critical')?.addEventListener('change', (e) => {
             const showCritical = e.target.checked;
-            
-            // On récupère tous les noeuds de type SERVER
             const serverNodes = data.noeuds.filter(n => n.group === 'SERVER');
             const serverIds = serverNodes.map(n => n.id);
-            
-            // Les liaisons associées
-            const serverEdges = data.liaisons.filter(l => serverIds.includes(l.to) || serverIds.includes(l.from));
 
             if (showCritical) {
                 nodes.update(serverNodes);
-                edges.update(serverEdges);
             } else {
                 nodes.remove(serverIds);
-                // vis-network remove automatiquement les edges liés, mais on peut être explicite
             }
         });
 
@@ -184,41 +206,42 @@ async function initTopology() {
 
     } catch (error) {
         console.error("Erreur lors du chargement de la topologie:", error);
-        container.innerHTML = '<div class="text-danger p-8 font-bold">Erreur : Impossible de charger la topologie. Vérifiez que l\'API backend est lancée.</div>';
+        container.innerHTML = '<div class="text-danger p-8 font-bold text-center">Erreur : Impossible de charger la topologie réseau.</div>';
+        return null;
     }
 }
 
 function ouvrirDrawer(nodeData) {
     const drawer = document.getElementById('topology-drawer');
-    if (!drawer) return;
+    if (!drawer || !nodeData) return;
 
-    // Extraire info depuis le label
-    const lines = nodeData.label.replace(/\*/g, '').split('\n');
+    const lines = (nodeData.label || '').replace(/\*/g, '').split('\n');
     const name = lines[0] || nodeData.id;
-    const ip = lines[1] || '--';
+    const ip = nodeData.ip || lines[1] || '--';
 
     document.getElementById('drawer-name').textContent = name;
     document.getElementById('drawer-ip').textContent = ip;
-    
-    // Déterminer le badge
+    document.getElementById('drawer-mac').textContent = nodeData.mac || '--';
+
     const badge = document.getElementById('drawer-type-badge');
+    const locationEl = document.getElementById('drawer-location');
+
     if (nodeData.group === 'CORE_SWITCH') {
         badge.textContent = 'SWITCH CŒUR';
         badge.className = 'inline-block mt-2 px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded text-[10px] uppercase font-bold';
-        document.getElementById('drawer-mac').textContent = '00:1A:2B:CORE';
-        document.getElementById('drawer-location').textContent = 'Salle Principale - N/D';
+        if (locationEl) locationEl.textContent = 'Salle Serveurs / Cœur de Réseau';
     } else if (nodeData.group === 'ACCESS_SWITCH') {
         badge.textContent = 'SWITCH ACCÈS';
         badge.className = 'inline-block mt-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded text-[10px] uppercase font-bold';
-        document.getElementById('drawer-mac').textContent = '00:1A:2B:ACCES';
-        document.getElementById('drawer-location').textContent = 'Étage 1 - N/D';
+        if (locationEl) locationEl.textContent = 'Baie de Brassage - N/D';
     } else {
-        badge.textContent = 'SERVEUR CRITIQUE';
+        badge.textContent = 'HÔTE CONNECTÉ';
         badge.className = 'inline-block mt-2 px-2 py-0.5 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded text-[10px] uppercase font-bold';
-        document.getElementById('drawer-mac').textContent = 'AA:BB:CC:DD:EE';
-        document.getElementById('drawer-location').textContent = 'Localisation dynamique...';
+        const portStr = nodeData.port ? `Port : ${nodeData.port}` : '';
+        const vlanStr = nodeData.vlan ? ` (${nodeData.vlan})` : '';
+        const switchStr = nodeData.switch ? ` | Switch : ${nodeData.switch}` : '';
+        if (locationEl) locationEl.textContent = `${portStr}${vlanStr}${switchStr}` || 'Localisation dynamique';
     }
 
-    // Ouvrir avec animation slide
     drawer.classList.remove('translate-x-full');
 }

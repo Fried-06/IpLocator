@@ -1,6 +1,5 @@
 fastapi
 uvicorn
 pydantic
-pysnmp
-netmiko
-pysnmp-lextudio 
+pysnmp>=7.1.30
+netmiko

@@ -197,7 +197,7 @@
              VUE DASHBOARD
         ══════════════════════════════════════════════ -->
             <div id="view-dashboard" class="view-section space-y-6" style="display:none">
-                <!-- KPI Cards -->
+                <!-- KPI Cards Dynamiques (Couches L3 & L7) -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
                         <div class="flex items-center justify-between mb-3">
@@ -205,27 +205,42 @@
                                 style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);">
                                 <i class="fa-solid fa-heart-pulse text-primary text-sm"></i>
                             </div>
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono"
-                                style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">OPTIMAL</span>
+                            <span id="kpi-l3-badge" class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono"
+                                style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">L3 OPTIMAL</span>
                         </div>
-                        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Santé Réseau
-                        </p>
-                        <p class="text-3xl font-bold text-white">98<span class="text-primary text-lg">%</span></p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Disponibilité Couche 3</p>
+                        <p class="text-3xl font-bold text-white"><span id="kpi-dispo-l3">--</span><span class="text-primary text-lg">%</span></p>
+                        <p class="text-[11px] text-gray-400 mt-1 font-mono"><span id="kpi-l3-count" class="text-white font-bold">--</span> machines en ligne (Ping)</p>
                     </div>
+
+                    <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="h-9 w-9 rounded-lg flex items-center justify-center"
+                                style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);">
+                                <i class="fa-solid fa-shield-halved text-danger text-sm"></i>
+                            </div>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono"
+                                style="background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.3);">PRIORITAIRE</span>
+                        </div>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Machines Critiques (NOC)</p>
+                        <p class="text-3xl font-bold text-white"><span id="kpi-critiques-online">--</span><span class="text-gray-600 text-lg">/<span id="kpi-critiques-total">--</span></span></p>
+                        <p class="text-[11px] text-gray-400 mt-1 font-mono">Systèmes vitaux sous surveillance</p>
+                    </div>
+
                     <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
                         <div class="flex items-center justify-between mb-3">
                             <div class="h-9 w-9 rounded-lg flex items-center justify-center"
                                 style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);">
-                                <i class="fa-solid fa-server text-cyan text-sm"></i>
+                                <i class="fa-solid fa-cubes-stacked text-cyan text-sm"></i>
                             </div>
                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono"
-                                style="background:rgba(6,182,212,0.1);color:#67e8f9;border:1px solid rgba(6,182,212,0.3);">EN
-                                LIGNE</span>
+                                style="background:rgba(6,182,212,0.1);color:#67e8f9;border:1px solid rgba(6,182,212,0.3);">COUCHE 7</span>
                         </div>
-                        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Équipements
-                            Actifs</p>
-                        <p class="text-3xl font-bold text-white">47<span class="text-gray-600 text-lg">/52</span></p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Services Applicatifs</p>
+                        <p class="text-3xl font-bold text-white"><span id="kpi-services-l7">--</span><span class="text-cyan text-lg ml-1">Ports UP</span></p>
+                        <p class="text-[11px] text-gray-400 mt-1 font-mono">HTTP, SSH, SMB, RDP vérifiés</p>
                     </div>
+
                     <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
                         <div class="flex items-center justify-between mb-3">
                             <div class="h-9 w-9 rounded-lg flex items-center justify-center"
@@ -233,43 +248,132 @@
                                 <i class="fa-solid fa-wave-square text-warning text-sm"></i>
                             </div>
                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono"
-                                style="background:rgba(245,158,11,0.1);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">NORMAL</span>
+                                style="background:rgba(245,158,11,0.1);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">RTT ICMP</span>
                         </div>
-                        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Débit Moyen
-                        </p>
-                        <p class="text-3xl font-bold text-white">312<span class="text-warning text-lg ml-1">Mbps</span>
-                        </p>
-                    </div>
-                    <div class="kpi-card rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="h-9 w-9 rounded-lg flex items-center justify-center"
-                                style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);">
-                                <i class="fa-solid fa-triangle-exclamation text-danger text-sm"></i>
-                            </div>
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono badge-pulse"
-                                style="background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.3);">ACTIF</span>
-                        </div>
-                        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1">Alertes
-                            Actives</p>
-                        <p class="text-3xl font-bold text-white">3</p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Latence Moyenne L3</p>
+                        <p class="text-3xl font-bold text-white"><span id="kpi-latence-moy">--</span><span class="text-warning text-lg ml-1">ms</span></p>
+                        <p class="text-[11px] text-gray-400 mt-1 font-mono">Temps d'aller-retour réseau</p>
                     </div>
                 </div>
 
-                <!-- Graphiques -->
+                <!-- TABLEAU DE SUPERVISION DES MACHINES & COUCHES L3 / L7 -->
+                <div class="rounded-xl overflow-hidden shadow-2xl" style="background:#111827;border:1px solid #1F2937;">
+                    <!-- Barre d'outils du tableau -->
+                    <div class="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4" style="border-bottom:1px solid #1F2937;background:rgba(15,23,42,0.6);">
+                        <div class="flex items-center gap-3">
+                            <div class="h-9 w-9 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);">
+                                <i class="fa-solid fa-network-wired text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-sm tracking-wide flex items-center gap-2">
+                                    SUPERVISION DES MACHINES ET SERVICES (L3 & L7)
+                                    <span class="inline-block h-2 w-2 rounded-full bg-primary badge-pulse"></span>
+                                </h3>
+                                <p class="text-[10px] text-gray-500 font-mono">Test réseau L3 (Ping ICMP) et Couche 7 applicative au démarrage et en temps réel</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Filtres -->
+                            <div class="inline-flex rounded-lg p-0.5" style="background:#0F172A;border:1px solid #1F2937;">
+                                <button type="button" id="filtre-tous" class="px-2.5 py-1 text-xs rounded font-medium text-white bg-primary/20 border border-primary/30 transition-all">
+                                    Toutes (<span id="compteur-tous">0</span>)
+                                </button>
+                                <button type="button" id="filtre-critiques" class="px-2.5 py-1 text-xs rounded font-medium text-gray-400 hover:text-white transition-all">
+                                    Critiques (<span id="compteur-critiques">0</span>)
+                                </button>
+                                <button type="button" id="filtre-alertes" class="px-2.5 py-1 text-xs rounded font-medium text-gray-400 hover:text-white transition-all">
+                                    Alertes (<span id="compteur-alertes">0</span>)
+                                </button>
+                            </div>
+
+                            <!-- Bouton Sonder Tout -->
+                            <button type="button" id="btn-sonder-tout" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white transition-all" style="background:#0F172A;border:1px solid #1F2937;">
+                                <i class="fa-solid fa-arrows-rotate text-primary"></i>
+                                <span>Re-sonder L3/L7</span>
+                            </button>
+
+                            <!-- Bouton Ajouter Machine -->
+                            <button type="button" id="btn-ouvrir-modal-ajout" class="btn-primary-glow flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all" style="background:linear-gradient(135deg,#10b981,#059669);color:#090D16;">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                                <span>Ajouter une Machine</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Responsive -->
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs">
+                            <thead class="uppercase tracking-wider font-semibold text-gray-500" style="background:#0B111E;border-bottom:1px solid #1F2937;">
+                                <tr>
+                                    <th class="py-3 px-4">Équipement / IP</th>
+                                    <th class="py-3 px-4">Criticité</th>
+                                    <th class="py-3 px-4">Couche 3 (Ping Réseau)</th>
+                                    <th class="py-3 px-4">Couche 7 (Service Applicatif)</th>
+                                    <th class="py-3 px-4">Dernier Sondage</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-supervision" class="divide-y divide-[#1F2937] text-gray-300">
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-gray-500 italic">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-primary mr-2"></i> Chargement de la télémétrie L3 / L7...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Graphiques de Trafic & Ports (Cockpit NOC) -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div class="lg:col-span-2 rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
-                        <h3 class="text-white font-semibold text-sm mb-5">Trafic Réseau en Temps Réel</h3>
+                        <h3 class="text-white font-semibold text-sm mb-5 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-primary"></i>
+                            Trafic Réseau Global (Mbps)
+                        </h3>
                         <div style="height:220px;"><canvas id="chart-traffic"></canvas></div>
                     </div>
-                    <div class="rounded-xl p-5" style="background:#111827;border:1px solid #1F2937;">
-                        <h3 class="text-white font-semibold text-sm mb-5">Répartition des Ports</h3>
-                        <div style="height:180px;" class="flex items-center justify-center"><canvas
-                                id="chart-ports"></canvas></div>
+                    <div class="rounded-xl p-5 flex flex-col justify-between" style="background:#111827;border:1px solid #1F2937;">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-white font-semibold text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-shield-heart text-warning"></i>
+                                État des Machines Critiques
+                            </h3>
+                            <span id="badge-total-critiques" class="text-[11px] font-mono px-2 py-0.5 rounded text-warning"
+                                style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);">
+                                0 critique
+                            </span>
+                        </div>
+
+                        <div style="height:150px;" class="relative flex items-center justify-center">
+                            <canvas id="chart-ports"></canvas>
+                            <div id="chart-critiques-center" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                                <span id="chart-critiques-pct" class="text-xl font-bold font-mono text-white">0%</span>
+                                <span class="text-[9px] uppercase tracking-wider text-gray-400 font-medium">Disponibilité</span>
+                            </div>
+                        </div>
+
+                        <!-- Mini-légende télémétrique -->
+                        <div class="flex items-center justify-around pt-3 border-t border-gray-800 text-[11px] font-mono mt-2">
+                            <div class="flex items-center gap-1.5" title="Opérationnel L3 + L7">
+                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                <span class="text-gray-400">UP:</span>
+                                <span id="donut-critiques-up" class="font-bold text-emerald-400">0</span>
+                            </div>
+                            <div class="flex items-center gap-1.5" title="Dégradé (L3 ou L7)">
+                                <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                                <span class="text-gray-400">Dégradé:</span>
+                                <span id="donut-critiques-warn" class="font-bold text-amber-400">0</span>
+                            </div>
+                            <div class="flex items-center gap-1.5" title="Hors ligne">
+                                <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+                                <span class="text-gray-400">DOWN:</span>
+                                <span id="donut-critiques-down" class="font-bold text-rose-400">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Assurez-vous que tableau_de_bord.js est bien appelé à la fin du fichier index.html -->
-
             </div>
 
             <!-- ══════════════════════════════════════════════
@@ -317,23 +421,15 @@
                         </div>
                     </form>
 
-                    <!-- Raccourcis (sans emojis texte) -->
-                    <div class="flex flex-wrap items-center gap-2 mt-3">
-                        <span class="text-[10px] text-gray-600 uppercase tracking-widest font-mono mr-1">Accès
-                            rapide</span>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="">
-                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> 
-                        </button>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="">
-                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> 
-                        </button>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="FREDA">
-                            <i class="fa-solid fa-bolt text-primary text-[9px]"></i> FREDA
-                        </button>
-                        <button type="button" class="btn-shortcut shortcut-badge" data-target="">
-                            <i class="fa-solid fa-network-wired text-cyan text-[9px]"></i>
-                            <span class="ip-addr"></span>
-                        </button>
+                    <!-- Accès Rapides : Machines Critiques uniquement -->
+                    <div class="flex flex-wrap items-center gap-2 mt-3" id="wrapper-raccourcis-critiques">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-mono mr-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-star text-warning text-xs"></i>
+                            <span>Machines Critiques :</span>
+                        </span>
+                        <div id="liste-raccourcis-critiques" class="flex flex-wrap items-center gap-2">
+                            <span class="text-[11px] text-gray-500 italic">Chargement des machines critiques...</span>
+                        </div>
                     </div>
                 </div>
 
@@ -739,44 +835,33 @@
                 <form id="form-settings" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                        <!-- Carte 1 : Mode de Fonctionnement -->
-                        <div class="kpi-card rounded-xl p-5 space-y-4"
-                            style="background:#111827;border:1px solid #1F2937;">
-                            <div class="flex items-center gap-2.5 text-primary text-sm font-semibold">
-                                <i class="fa-solid fa-toggle-on"></i>
-                                <h4>Mode de Fonctionnement</h4>
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Moteur
-                                    de Découverte</label>
-                                <select id="setting-mode"
-                                    class="w-full rounded-lg px-3.5 py-2.5 text-xs text-white bg-[#0F172A] border border-[#1F2937] outline-none">
-                                    <option value="">Mode  (Données Démo Virtuelles)</option>
-                                    <option value="REAL_NETWORK">Mode Réseau Réel (Interrogation Live SNMP / SSH)
-                                    </option>
-                                </select>
-                            </div>
-                            <p class="text-[11px] text-gray-500 italic">
-                                En mode Réel, l'application exécute les requêtes CDP/LLDP directement sur l'IP racine
-                                spécifiée.
-                            </p>
-                        </div>
-
-                        <!-- Carte 2 : Ancrage Réseau Cœur -->
+                        <!-- Carte 1 : Ancrage Réseau Cœur & Passerelle -->
                         <div class="kpi-card rounded-xl p-5 space-y-4"
                             style="background:#111827;border:1px solid #1F2937;">
                             <div class="flex items-center gap-2.5 text-cyan text-sm font-semibold">
                                 <i class="fa-solid fa-sitemap"></i>
-                                <h4>Switch Cœur / Passerelle</h4>
+                                <h4>Switch Cœur &amp; Routage</h4>
                             </div>
                             <div>
                                 <label
                                     class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Adresse
-                                    IP Racine (Core)</label>
+                                    IP Racine (Core Switch) *</label>
                                 <input type="text" id="setting-core-ip"
                                     class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-cyan"
-                                    placeholder="" required>
+                                    placeholder="ex: 10.28.12.99" required>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                                    <span>Passerelle par Défaut / Routeur (Gateway)</span>
+                                    <span class="text-[10px] text-cyan font-mono lowercase">inter-réseaux</span>
+                                </label>
+                                <input type="text" id="setting-gateway-ip"
+                                    class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-cyan"
+                                    placeholder="ex: 10.28.16.1 ou 192.168.1.254">
+                                <p class="text-[10px] text-gray-500 mt-1">
+                                    Passerelle pour naviguer et joindre des équipements situés sur d'autres sous-réseaux ou VLANs.
+                                </p>
                             </div>
                             <div>
                                 <label
@@ -789,6 +874,34 @@
                                     <option value="Generic">Générique RFC 1213 MIB-II</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <!-- Carte 2 : Administration Sécurisée SSH (Netmiko) -->
+                        <div class="kpi-card rounded-xl p-5 space-y-4"
+                            style="background:#111827;border:1px solid #1F2937;">
+                            <div class="flex items-center gap-2.5 text-primary text-sm font-semibold">
+                                <i class="fa-solid fa-terminal"></i>
+                                <h4>Accès Console &amp; SSH Netmiko</h4>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Utilisateur
+                                    d'Administration SSH</label>
+                                <input type="text" id="setting-ssh-user"
+                                    class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-primary"
+                                    placeholder="admin">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Mot
+                                    de Passe SSH</label>
+                                <input type="password" id="setting-ssh-pwd"
+                                    class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none focus:border-primary"
+                                    placeholder="••••••••">
+                            </div>
+                            <p class="text-[11px] text-gray-500 italic pt-1">
+                                Utilisé pour l'isolation de port physique (shutdown/disable) et l'interrogation directe en console CLI.
+                            </p>
                         </div>
 
                         <!-- Carte 3 : Sécurité SNMP -->
@@ -870,30 +983,14 @@
                             </div>
                         </div>
 
-                        <!-- Carte 4 : Fallback SSH & Apparence -->
+                        <!-- Carte 4 : Apparence & Personnalisation -->
                         <div class="kpi-card rounded-xl p-5 space-y-4 md:col-span-2"
                             style="background:#111827;border:1px solid #1F2937;">
                             <div class="flex items-center gap-2.5 text-gray-300 text-sm font-semibold">
-                                <i class="fa-solid fa-terminal"></i>
-                                <h4>Identifiants SSH &amp; Personnalisation</h4>
+                                <i class="fa-solid fa-palette text-cyan"></i>
+                                <h4>Identité Visuelle &amp; Interface</h4>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label
-                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Utilisateur
-                                        SSH (Netmiko)</label>
-                                    <input type="text" id="setting-ssh-user"
-                                        class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none"
-                                        placeholder="admin">
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Mot
-                                        de Passe SSH</label>
-                                    <input type="password" id="setting-ssh-pwd"
-                                        class="w-full rounded-lg px-3.5 py-2 text-xs font-mono text-white bg-[#0F172A] border border-[#1F2937] outline-none"
-                                        placeholder="••••••••">
-                                </div>
                                 <div>
                                     <label
                                         class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Thème
@@ -987,8 +1084,152 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════
-     SCRIPTS
-═══════════════════════════════════════════════════ -->
+         MODAL D'AJOUT D'UNE MACHINE EN SUPERVISION (L3/L7)
+    ═══════════════════════════════════════════════════ -->
+    <div id="modal-ajouter-machine"
+        class="fixed inset-0 z-50 items-center justify-center hidden"
+        style="background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);">
+        <div class="w-full max-w-lg mx-4 rounded-2xl p-6 shadow-2xl relative animate-fadeIn"
+            style="background:#111827; border: 1px solid #1F2937; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+
+            <!-- En-tête de la modal -->
+            <div class="flex items-center justify-between pb-4 mb-4" style="border-bottom: 1px solid #1F2937;">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl flex items-center justify-center"
+                        style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);">
+                        <i class="fa-solid fa-server text-primary text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm tracking-wide">NOUVEL ÉQUIPEMENT EN SUPERVISION</h3>
+                        <p class="text-[11px] text-gray-400 font-mono">Télémétrie Couche 3 (ICMP) &amp; Couche 7 (Service)</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-fermer-modal-ajout" class="text-gray-400 hover:text-white text-lg transition-colors p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Formulaire d'ajout -->
+            <form id="form-ajouter-machine" class="space-y-4">
+                <!-- Nom de la machine -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">
+                        Nom / Rôle de l'équipement
+                    </label>
+                    <input type="text" id="input-machine-nom"
+                        class="w-full rounded-lg px-3.5 py-2.5 text-xs text-white outline-none transition-all focus:border-primary"
+                        style="background:#090D16; border:1px solid #1F2937;"
+                        placeholder="Ex: Serveur DC-Principal, Switch Core, Station NOC-01" />
+                </div>
+
+                <!-- Adresse IP -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                        <span>Adresse IPv4 Cible *</span>
+                        <span class="text-[10px] text-primary font-mono lowercase">test icmp au démarrage</span>
+                    </label>
+                    <input type="text" id="input-machine-ip" required
+                        class="w-full rounded-lg px-3.5 py-2.5 text-xs text-white font-mono outline-none transition-all focus:border-primary"
+                        style="background:#090D16; border:1px solid #1F2937;"
+                        placeholder="Ex: 10.28.16.114 ou 192.168.1.1" />
+                </div>
+
+                <!-- Paramètres Couche 7 (Port & Protocole) -->
+                <div class="p-3.5 rounded-xl space-y-3" style="background:#0B111E; border:1px solid #1E293B;">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-cyan flex items-center gap-1.5 uppercase tracking-wider">
+                            <i class="fa-solid fa-layer-group text-xs"></i> Sondage Couche 7 (Applicatif)
+                        </span>
+                        <span class="text-[10px] text-gray-500 font-mono">TCP / Handshake</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">Port(s) L7 *</label>
+                            <input type="text" id="input-machine-port" required value="80"
+                                class="w-full rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-cyan"
+                                style="background:#090D16; border:1px solid #1F2937;" 
+                                placeholder="ex: 80,443" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">Protocole L7</label>
+                            <select id="input-machine-proto"
+                                class="w-full rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-cyan"
+                                style="background:#090D16; border:1px solid #1F2937;">
+                                <option value="AUTO" selected>Auto-détection (Multi-Protocoles)</option>
+                                <option value="HTTP">HTTP (Web 80)</option>
+                                <option value="HTTPS">HTTPS (Web SSL 443)</option>
+                                <option value="SSH">SSH (Console 22)</option>
+                                <option value="SMB">SMB (Fichiers 445)</option>
+                                <option value="RDP">RDP (Bureau Distant 3389)</option>
+                                <option value="DNS">DNS (Résolution 53)</option>
+                                <option value="TCP">TCP Générique</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Presets rapides de ports -->
+                    <div>
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest block mb-1.5">Présélections rapides :</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 hover:text-white transition-all"
+                                style="background:#111827;border:1px solid #1F2937;" data-port="80" data-proto="HTTP">HTTP (80)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 hover:text-white transition-all"
+                                style="background:#111827;border:1px solid #1F2937;" data-port="443" data-proto="HTTPS">HTTPS (443)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-primary hover:text-white transition-all border border-primary/40"
+                                style="background:rgba(16,185,129,0.1);" data-port="80,443" data-proto="HTTP">Web (80, 443)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-cyan hover:text-white transition-all border border-cyan/40"
+                                style="background:rgba(6,182,212,0.1);" data-port="80,443,22" data-proto="AUTO">Multi (80,443,22)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 hover:text-white transition-all"
+                                style="background:#111827;border:1px solid #1F2937;" data-port="22" data-proto="SSH">SSH (22)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 hover:text-white transition-all"
+                                style="background:#111827;border:1px solid #1F2937;" data-port="445" data-proto="SMB">SMB (445)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 hover:text-white transition-all"
+                                style="background:#111827;border:1px solid #1F2937;" data-port="3389" data-proto="RDP">RDP (3389)</button>
+                            <button type="button" class="btn-preset-port px-2 py-0.5 rounded text-[10px] font-mono text-gray-400 hover:text-white transition-all"
+                                style="background:#111827;border:1px solid #1F2937;" data-port="53" data-proto="DNS">DNS (53)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Case à cocher Machine Critique -->
+                <div class="p-3.5 rounded-xl flex items-start gap-3 cursor-pointer select-none transition-all hover:border-amber-500/40"
+                    style="background:#0B111E; border:1px solid #1F2937;"
+                    onclick="const cb = document.getElementById('input-machine-critique'); cb.checked = !cb.checked;">
+                    <input type="checkbox" id="input-machine-critique"
+                        class="mt-0.5 h-4 w-4 rounded accent-warning cursor-pointer" onclick="event.stopPropagation();" />
+                    <div>
+                        <label class="text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-triangle-exclamation text-warning text-xs"></i>
+                            Définir comme Machine Critique (NOC)
+                        </label>
+                        <p class="text-[11px] text-gray-400 mt-0.5">
+                            Cette machine aura une priorité d'alerte haute sur le tableau de bord avec un indicateur dédié.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="flex gap-3 pt-2">
+                    <button type="button" id="btn-annuler-modal-ajout"
+                        class="flex-1 py-2.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white transition-colors"
+                        style="background:#0F172A; border:1px solid #1F2937;">
+                        Annuler
+                    </button>
+                    <button type="submit" id="btn-soumettre-machine"
+                        class="flex-1 py-2.5 rounded-lg text-xs font-bold text-[#090D16] transition-all flex items-center justify-center gap-2"
+                        style="background:linear-gradient(135deg,#10b981,#059669); box-shadow:0 0 15px rgba(16,185,129,0.3);">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Ajouter &amp; Sonder</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         SCRIPTS
+    ═══════════════════════════════════════════════════ -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="ressources/js/auth.js"></script>
     <script src="ressources/js/tracage.js"></script>
@@ -1022,6 +1263,10 @@
 
             if (viewId === 'view-dashboard') {
                 setTimeout(() => { if (typeof initDashboardCharts === 'function') initDashboardCharts(); }, 50);
+                if (typeof chargerSupervision === 'function') chargerSupervision();
+            }
+            if (viewId === 'view-tracing') {
+                if (typeof chargerRaccourcisCritiques === 'function') chargerRaccourcisCritiques();
             }
             if (viewId === 'view-topology') {
                 setTimeout(() => {

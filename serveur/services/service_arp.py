@@ -1,6 +1,7 @@
 import subprocess
 import re
 import socket
+import os
 import asyncio
 from typing import Optional, Tuple
 
@@ -43,8 +44,15 @@ def get_mac_vendor(mac: str) -> str:
     if not mac or mac == "N/A" or len(mac) < 8: return "Inconnu"
     prefix = mac[:8].upper().replace("-", ":")
     known_ouis = {
-        "00:1A:2B": "Cisco Systems", "00:50:56": "VMware Virtual", "00:0C:29": "VMware Virtual",
-        "00:15:5D": "Microsoft Hyper-V", "B8:27:EB": "Raspberry Pi", "F0:92:1C": "Apple, Inc.",
-        "50:C7:BF": "TP-Link Technologies", "70:4D:7B": "Huawei Technologies", "F4:60:E2": "Dell Inc."
+        "00:1A:2B": "Cisco Systems", "00:64:40": "Cisco Systems", "A4:4C:C8": "Cisco Systems",
+        "64:4E:D7": "Cisco Systems", "00:50:56": "VMware Virtual", "00:0C:29": "VMware Virtual",
+        "00:15:5D": "Microsoft Hyper-V", "B8:27:EB": "Raspberry Pi", "DC:A6:32": "Raspberry Pi",
+        "F0:92:1C": "Apple, Inc.", "10:FE:ED": "Apple, Inc.", "AC:BC:32": "Apple, Inc.",
+        "50:C7:BF": "TP-Link", "70:4D:7B": "Huawei", "F4:60:E2": "Dell Inc.",
+        "78:0C:B8": "Samsung / Dell", "5C:F9:DD": "Dell Inc.", "8C:DC:D4": "Dell Inc.",
+        "74:78:A6": "Dell Inc.", "18:03:73": "Dell Inc.", "B0:22:7A": "Lenovo",
+        "80:E8:2C": "Intel Corporation", "70:A7:41": "HP Inc.", "6C:3B:E5": "HP Inc.",
+        "B4:B5:2F": "Hewlett Packard", "10:E7:C6": "ASUSTeK", "04:D4:C4": "ASUSTeK",
+        "48:0F:CF": "Hon Hai (Foxconn)", "DA:0D:17": "Samsung Electronics"
     }
     return known_ouis.get(prefix, "Inconnu")

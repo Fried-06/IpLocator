@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Écouteurs sur les raccourcis
+    // 2. Écouteurs sur les raccourcis statiques éventuels
     shortcuts.forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.getAttribute('data-target');
@@ -26,7 +26,92 @@ document.addEventListener('DOMContentLoaded', () => {
             lancerTracage(target, submitBtn);
         });
     });
+
+    // 3. Charger dynamiquement les raccourcis des machines critiques
+    chargerRaccourcisCritiques();
 });
+
+/**
+ * Charge dynamiquement les machines critiques et les affiche sous forme d'accès rapides
+ */
+async function chargerRaccourcisCritiques(machinesOptionnelles = null) {
+    const container = document.getElementById('liste-raccourcis-critiques');
+    if (!container) return;
+
+    let machines = machinesOptionnelles;
+
+    if (!machines) {
+        try {
+            const token = typeof getToken === 'function' ? getToken() : localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const response = await fetch('http://localhost:8000/api/v1/supervision/machines', { headers });
+            if (response.ok) {
+                const data = await response.json();
+                machines = data.machines || [];
+            }
+        } catch (e) {
+            console.warn("Impossible de charger les machines critiques pour l'accès rapide:", e);
+        }
+    }
+
+    if (!machines || !Array.isArray(machines)) {
+        container.innerHTML = `<span class="text-[11px] text-gray-500 italic">Non disponible</span>`;
+        return;
+    }
+
+    const critiques = machines.filter(m => m.est_critique);
+
+    if (critiques.length === 0) {
+        container.innerHTML = `
+            <span class="text-[11px] text-gray-500 italic flex items-center gap-1.5">
+                <i class="fa-regular fa-star text-gray-600"></i>
+                Aucune machine critique définie (à marquer dans le Tableau de Bord)
+            </span>
+        `;
+        return;
+    }
+
+    const html = critiques.map(m => {
+        const isUp = m.statut_l3 === 'UP';
+        const statusBadgeBg = isUp ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]';
+        const statusText = isUp ? 'En Ligne (UP)' : 'Hors Ligne (DOWN)';
+        const label = m.nom ? `${m.nom}` : m.ip;
+
+        return `
+            <button type="button" class="btn-raccourci-critique shortcut-badge group hover:border-amber-500/50 hover:bg-amber-500/10 transition-all flex items-center gap-2 cursor-pointer"
+                data-ip="${m.ip}"
+                title="${label} (${m.ip}) — ${statusText}">
+                <i class="fa-solid fa-star text-warning text-[10px]"></i>
+                <span class="font-medium text-white text-xs">${label}</span>
+                <span class="text-[10px] font-mono text-cyan">${m.ip}</span>
+                <span class="h-2 w-2 rounded-full ${statusBadgeBg}"></span>
+            </button>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+
+    // Attacher l'écouteur de clic pour chaque bouton critique
+    const form = document.getElementById('form-tracing');
+    const input = document.getElementById('input-target');
+
+    container.querySelectorAll('.btn-raccourci-critique').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const ip = btn.getAttribute('data-ip');
+            if (input) {
+                input.value = ip;
+                input.focus();
+            }
+            const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+            lancerTracage(ip, submitBtn);
+        });
+    });
+}
+
+// Rendre la fonction accessible globalement
+window.chargerRaccourcisCritiques = chargerRaccourcisCritiques;
 
 async function lancerTracage(target, btnElement) {
     let originalText = '';
@@ -49,7 +134,9 @@ async function lancerTracage(target, btnElement) {
             const data = await response.json();
             afficherResultats(data);
         } else {
-            alert("Équipement non trouvé ou erreur de communication API.");
+            const errData = await response.json().catch(() => null);
+            const msg = (errData && errData.detail) ? errData.detail : "Équipement non trouvé ou erreur de communication API.";
+            alert(msg);
         }
     } catch (error) {
         console.error("Erreur:", error);
